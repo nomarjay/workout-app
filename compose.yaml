@@ -1,20 +1,14 @@
 services:
-  mysql:
-    image: mysql:8.4
-    environment:
-      MYSQL_ROOT_PASSWORD: local-root-password
-      MYSQL_DATABASE: workout_app
-      MYSQL_USER: workout
-      MYSQL_PASSWORD: local-workout-password
+  mongodb:
+    image: mongo:8.0
     ports:
-      - "127.0.0.1:3306:3306"
+      - "127.0.0.1:27017:27017"
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - mongodb_data:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand({ ping: 1 }).ok"]
       interval: 5s
       timeout: 5s
       retries: 20
 volumes:
-  mysql_data:
+  mongodb_data:

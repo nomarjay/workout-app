@@ -1,0 +1,5 @@
+create workoput mode 
+view exercisesBymMuscles or view exercisewsByEquipment
+
+render a modal with sample preset workout recommended
+
