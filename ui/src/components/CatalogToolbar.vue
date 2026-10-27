@@ -4,7 +4,7 @@ defineProps({
   sort: String,
   layout: String,
   count: Number,
-  muscleSort: Boolean,
+  equipmentSort: Boolean,
 });
 defineEmits(['update:search', 'update:sort', 'update:layout']);
 </script>
@@ -18,7 +18,7 @@ defineEmits(['update:search', 'update:sort', 'update:layout']);
           placeholder="Search by name…"
           @input="$emit('update:search', $event.target.value)"
       /></label>
-      <div class="sort-control" role="group" aria-label="Sort by name">
+      <div class="sort-control" role="group" aria-label="Sort collection">
         <span class="control-label">Sort</span>
         <div class="pills">
           <button
@@ -28,7 +28,7 @@ defineEmits(['update:search', 'update:sort', 'update:layout']);
             @click="$emit('update:sort', 'asc')"
           >
             A–Z
-          </button>
+          </button><button type="button" class="pill" :aria-pressed="sort === 'recent'" @click="$emit('update:sort', 'recent')">Recently added</button><button v-if="equipmentSort" type="button" class="pill" :aria-pressed="sort === 'equipment'" @click="$emit('update:sort', 'equipment')">Equipment type</button>
         </div>
       </div>
       <div class="view-toggle" role="group" aria-label="Display mode">
@@ -48,16 +48,6 @@ defineEmits(['update:search', 'update:sort', 'update:layout']);
           ☰ List
         </button>
       </div>
-    </div>
-    <div v-if="muscleSort" class="pills">
-      <button
-        type="button"
-        class="pill"
-        :aria-pressed="sort === 'muscle'"
-        @click="$emit('update:sort', 'muscle')"
-      >
-        Primary muscle group
-      </button>
     </div>
     <slot />
   </div>

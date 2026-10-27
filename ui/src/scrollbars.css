@@ -1,0 +1,23 @@
+/* One quiet scrollbar treatment for the page and every nested scrolling area. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-button) transparent;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--color-border-button);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-subtle);
+}
+@media (forced-colors: active) {
+  * { scrollbar-color: auto; }
+}

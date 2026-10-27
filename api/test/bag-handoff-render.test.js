@@ -21,7 +21,7 @@ test('management checkboxes are opt-in and the bag provides a direct save and de
     assert.ok(opened.includes('Select Seated Row for management'));
     assert.match(opened, /input[^>]*type="checkbox"[^>]*checked/);
     const bag = await render(Bag, { draft: [exercise], name: 'Back day' });
-    for (const text of ['Workout name', 'value="Back day"', 'Save &amp; continue', 'complete sets, reps, and weights in Workouts', 'Move Seated Row up in workout bag']) assert.ok(bag.includes(text), text);
+    for (const text of ['Workout name', 'value="Back day"', 'Save &amp; continue', 'Configure sets, reps, and weights now', 'Move Seated Row up in workout bag']) assert.ok(bag.includes(text), text);
     assert.ok(!/button[^>]*type="submit"[^>]*disabled/.test(bag));
     const unnamed = await render(Bag, { draft: [exercise], name: '' });
     assert.match(unnamed, /button[^>]*type="submit"[^>]*disabled/);

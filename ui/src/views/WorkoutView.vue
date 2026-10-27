@@ -1,4 +1,5 @@
 <script setup>
+import { vImageReveal } from '../directives/imageReveal.js';
 import { computed, ref, watch } from 'vue';
 import CatalogToolbar from '../components/CatalogToolbar.vue';
 import DataCard from '../components/DataCard.vue';
@@ -18,6 +19,7 @@ const props = defineProps({
   deleting: String,
   editingId: String,
   trainerWorkout: Object,
+  saveDraftTrainer: Function,
 });
 const emit = defineEmits([
   'save',
@@ -33,6 +35,7 @@ const emit = defineEmits([
   'arrange',
   'update:workoutName',
   'trainer',
+  'draft-trainer',
   'finishTrainer',
 ]);
 const name = computed({
@@ -59,7 +62,11 @@ const singleRoutine = computed(() => selectedRoutines.value.length === 1 ? props
 function selectRoutine(id, checked) { selectedRoutines.value = checked ? [...new Set([...selectedRoutines.value, id])] : selectedRoutines.value.filter(value => value !== id); }
 const blocked = computed(() => props.saving || Boolean(props.deleting));
 watch(() => props.draft.map(item => item.selectionId), ids => { selectedExercises.value = selectedExercises.value.filter(id => ids.includes(id)); });
-watch(() => props.editingId, () => { selectedExercises.value = []; expanded.value = true; });
+watch(() => props.editingId, id => {
+  selectedExercises.value = [];
+  expanded.value = true;
+  if (id) manageRoutines.value = true;
+}, { immediate: true });
 watch([() => props.workouts, () => props.editingId], () => {
   selectedRoutines.value = selectedRoutines.value.filter(id => props.workouts.some(item => item.id === id) && id !== props.editingId);
 });
@@ -112,16 +119,17 @@ function selectAllRoutines(checked) {
       trainerWorkout.updatedAt || trainerWorkout.createdAt
     }`"
     :workout="trainerWorkout"
+    :save-draft="saveDraftTrainer"
     @done="emit('finishTrainer', $event)"
   />
   <template v-else>
     <CollectionPanel v-model="manageRoutines" v-model:selected-ids="managementSelections" collection="workout" item-label="item" :disabled="blocked" description="Select workouts to edit or delete. All routine editing controls are enabled here."><section class="exercise-manager"><div class="management-actions"><button type="button" class="primary" :disabled="blocked || Boolean(editingId)" @click="emit('browse')">＋ Create new workout</button><div class="row-actions"><button type="button" :disabled="!singleRoutine || blocked" @click="emit('edit', singleRoutine)">Edit selected</button><button type="button" class="delete" :disabled="!selectedRoutines.length || blocked" @click="emit('delete-many', [...selectedRoutines])">{{ deleting === 'bulk' ? 'Deleting…' : `Delete selected (${selectedRoutines.length})` }}</button></div></div><p class="hint">Use the Select checkboxes on workout cards. Finish or cancel editing before deleting that routine.</p><div class="management-selection"><label class="checkbox-label"><input type="checkbox" :checked="allRoutines" :indeterminate="selectableRoutines.some(item => selectedRoutines.includes(item.id)) && !allRoutines" :disabled="!selectableRoutines.length || blocked" @change="selectAllRoutines($event.target.checked)">Select all shown ({{ selectableRoutines.length }})</label><span>{{ selectedRoutines.length }} selected</span><button type="button" class="text-action" :disabled="!selectedRoutines.length || blocked" @click="selectedRoutines = []">Clear selection</button></div></section></CollectionPanel>
-    <section class="workout-checkout" aria-label="Workout builder">
+    <section id="workout-editor" class="workout-checkout" tabindex="-1" aria-label="Workout builder">
 
-      <div class="shop-steps">
+      <nav class="shop-steps" aria-label="Workout steps">
         <span class="current"><b>01</b> Review &amp; save workout</span
-        ><span>2 · Trainer Mode (optional)</span>
-      </div>
+        ><button type="button" class="step-link" :disabled="!draft.length || blocked" @click="emit('draft-trainer')">2 · Trainer Mode (optional)</button>
+      </nav>
       <form class="checkout-layout" @submit.prevent="emit('save', name)">
         <section class="checkout-cart" aria-label="Selected exercises">
           <div class="cart-section-heading">
@@ -147,7 +155,7 @@ function selectAllRoutines(checked) {
               </button>
             </div>
           </div>
-<div v-if="manageRoutines && draft.length" class="workout-bulk-controls"><label class="checkbox-label"><input type="checkbox" :checked="allExercises" :indeterminate="selectedExercises.length > 0 && !allExercises" :disabled="blocked" @change="selectAllExercises($event.target.checked)">Select all exercises ({{ draft.length }})</label><span>{{ selectedExercises.length }} selected</span><button type="button" class="delete" :disabled="!selectedExercises.length || blocked" @click="removeSelectedExercises">Remove selected exercises</button><button type="button" class="text-action" :disabled="!selectedExercises.length || blocked" @click="selectedExercises = []">Clear selection</button></div>
+<div v-if="manageRoutines && draft.length" class="workout-bulk-controls"><label class="checkbox-label"><input type="checkbox" :checked="allExercises" :indeterminate="selectedExercises.length > 0 && !allExercises" :disabled="blocked" @change="selectAllExercises($event.target.checked)" >Select all exercises ({{ draft.length }})</label><span>{{ selectedExercises.length }} selected</span><button type="button" class="delete" :disabled="!selectedExercises.length || blocked" @click="removeSelectedExercises">Remove selected exercises</button><button type="button" class="text-action" :disabled="!selectedExercises.length || blocked" @click="selectedExercises = []">Clear selection</button></div>
           <Transition name="reveal"
             ><div v-if="expanded">
               <TransitionGroup name="selection" tag="ol" class="checkout-items"
@@ -159,13 +167,13 @@ function selectAllRoutines(checked) {
                 >
                   <label v-if="manageRoutines" class="workout-row-select"><input v-model="selectedExercises" type="checkbox" :value="exercise.selectionId" :disabled="blocked" :aria-label="`Select exercise ${index + 1}: ${exercise.name}`"><span class="cart-position">{{ String(index + 1).padStart(2, '0') }}</span></label><span v-else class="cart-position">{{ String(index + 1).padStart(2, '0') }}</span>
                   <div class="cart-photo">
-                    <img
+                    <img v-image-reveal="exercise.image"
                       v-if="exercise.image"
                       :src="exercise.image"
                       alt=""
                       loading="lazy"
                       @error="$event.target.style.visibility = 'hidden'"
-                    /><span v-else aria-hidden="true">◇</span>
+                     decoding="async"/><span v-else aria-hidden="true">◇</span>
                   </div>
                   <div class="cart-item-info">
                     <p class="shop-kicker">
@@ -278,8 +286,7 @@ function selectAllRoutines(checked) {
             <span aria-hidden="true">→</span>
           </button>
           <p class="summary-note">
-            Save your routine, then optionally configure sets, reps, and weights
-            in Trainer Mode.
+            Configure sets, reps, and weights now, or save your routine first.
           </p>
           <button
             v-if="editingId"

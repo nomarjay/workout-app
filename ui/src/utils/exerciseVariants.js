@@ -18,7 +18,7 @@ export function groupExerciseVariants(exercises) {
       ? exercise.name
       : exerciseFamilyName(exercise.name) || exercise.name;
     const id = exercise.exerciseId || name.toLowerCase();
-    if (!groups.has(id)) groups.set(id, { id, name, variants: [] });
+    if (!groups.has(id)) groups.set(id, { id, name, createdAt: exercise.createdAt, variants: [] });
     const variants = groups.get(id).variants;
     if (
       !variants.some(

@@ -1,6 +1,6 @@
 <script setup>
 import SmithWeightInfo from './SmithWeightInfo.vue';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, useId, watch } from 'vue';
 import { algorithmSetPlan } from '../utils/trainerAlgorithms.js';
 import { suggestedSetWeight } from '../utils/training.js';
 import { barResistance, totalLoad, exerciseLabel } from '../utils/equipment.js';
@@ -12,6 +12,7 @@ const props = defineProps({
   algorithm: Object,
   detailed: Boolean,
 });
+const headingId = `${useId()}-set-guide`;
 const templatePlans = computed(() =>
   props.assignments.map((item) => ({
     item,
@@ -82,9 +83,9 @@ function setCount(item) {
 }
 </script>
 <template>
-  <aside class="panel trainer-set-guide" aria-labelledby="set-guide-heading">
+  <aside class="panel trainer-set-guide" :aria-labelledby="headingId">
     <p class="eyebrow">YOUR SET PLAN</p>
-    <h2 id="set-guide-heading">Weight by set</h2>
+    <h2 :id="headingId">Weight by set</h2>
     <p v-if="!algorithm" class="hint">
       The starting load uses your one-rep max, target reps, and reserve reps.
       Equal working sets keep the same weight. Without a one-rep max, working
@@ -127,24 +128,19 @@ function setCount(item) {
           Weight range: {{ item.minWeight }}–{{ item.maxWeight }}
           {{ weightUnit }}
         </p>
-        <p v-if="item.useAlgorithm === false" class="hint">
-          Manual plan · {{ item.sets }} sets × {{ item.reps }} reps at
-          {{
-            totalLoad(
-              item.workingWeight,
-              workout.exercises[item.exerciseIndex],
-              weightUnit
-            )
-          }}
-          {{ weightUnit
-          }}<SmithWeightInfo
-            :exercise="workout.exercises[item.exerciseIndex]"
-          />
-        </p>
+        <template v-if="item.useAlgorithm === false">
+          <p class="hint">Manual plan · {{ item.sets }} sets × {{ item.reps }} reps</p>
+          <p v-if="!setCount(item) || totalLoad(item.workingWeight, workout.exercises[item.exerciseIndex], weightUnit) === null" class="hint">Enter a working weight and number of sets to see your plan.</p>
+          <div v-else class="set-table-scroll" role="region" aria-label="Set plan table" tabindex="0"><table>
+            <caption class="sr-only">Manual set plan for {{ workout.exercises[item.exerciseIndex].name }}</caption>
+            <thead><tr><th scope="col">Set</th><th scope="col">Weight</th><th scope="col">Reps</th></tr></thead>
+            <tbody><tr v-for="set in Math.min(setCount(item), 100)" :key="set"><th scope="row">Set {{ set }}</th><td>{{ totalLoad(item.workingWeight, workout.exercises[item.exerciseIndex], weightUnit) }} {{ weightUnit }}<SmithWeightInfo :exercise="workout.exercises[item.exerciseIndex]" /></td><td>{{ item.reps }}</td></tr><tr v-if="setCount(item) > 100"><th scope="row">Sets 101–{{ setCount(item) }}</th><td>{{ totalLoad(item.workingWeight, workout.exercises[item.exerciseIndex], weightUnit) }} {{ weightUnit }}</td><td>{{ item.reps }}</td></tr></tbody>
+          </table></div>
+        </template>
         <p v-else-if="!sets.length" class="hint">
           Enter a maximum weight to see all {{ algorithm.sets.length }} sets.
         </p>
-        <table v-else>
+        <div v-else class="set-table-scroll" role="region" aria-label="Set plan table" tabindex="0"><table>
           <caption class="sr-only">
             Template set plan for
             {{
@@ -175,7 +171,7 @@ function setCount(item) {
               <td>{{ range(set.repsMin, set.repsMax) }}</td>
             </tr>
           </tbody>
-        </table>
+        </table></div>
       </section>
     </template>
     <template v-else>
@@ -209,7 +205,7 @@ function setCount(item) {
             The suggested load rounds to zero. Use a smaller weight increment if
             your equipment supports it.
           </p>
-          <table>
+          <div class="set-table-scroll" role="region" aria-label="Set plan table" tabindex="0"><table>
             <caption class="sr-only">
               Set plan for
               {{
@@ -276,7 +272,7 @@ function setCount(item) {
                 <td>—</td>
               </tr>
             </tbody>
-          </table>
+          </table></div>
         </template>
       </section>
       <p v-if="assignments.length" class="hint">

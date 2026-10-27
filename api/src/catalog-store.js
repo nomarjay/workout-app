@@ -294,6 +294,8 @@ export function registerCatalogRoutes(app, db) {
       } catch (error) {
         return res.status(400).json({ error: error.message });
       }
+      record.updatedAt = new Date().toISOString();
+      if (!previous) record.createdAt = record.updatedAt;
       if (previous) {
         if (kind === 'equipment') {
           const removed = (previous.attachmentIds || []).filter(

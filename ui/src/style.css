@@ -110,7 +110,7 @@ select:focus-visible {
   outline-offset: 3px;
 }
 .shell {
-  max-width: 1400px;
+  max-width: 80vw;
   margin: auto;
   padding: 0 32px;
 }
@@ -696,6 +696,7 @@ footer {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+    scrollbar-width: thin;
   }
 }
 @media (max-width: 600px) {

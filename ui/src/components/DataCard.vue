@@ -1,4 +1,5 @@
 <script setup>
+import { vImageReveal } from '../directives/imageReveal.js';
 import { computed, ref, watch } from 'vue';
 const props = defineProps({
   title: String,
@@ -38,13 +39,13 @@ watch(
             (index ? 'back view' : 'front or back view')
           "
         >
-          <img
+          <img v-image-reveal="view.image"
             :src="view.image"
             alt=""
             loading="lazy"
             decoding="async"
             @error="failed = true"
-          /><img
+          /><img v-image-reveal="layer"
             v-for="layer in view.overlays"
             :key="layer"
             :src="layer"
@@ -55,7 +56,7 @@ watch(
             @error="failed = true"
           /></div
       ></template>
-      <img
+      <img v-image-reveal="image"
         v-else-if="image && !failed"
         :key="image"
         :src="image"

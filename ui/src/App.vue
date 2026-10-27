@@ -1,8 +1,8 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import ProfileMenu from './components/ProfileMenu.vue';
+import { createDraftTrainerSaver } from './utils/draftTrainer.js';
 import ExerciseView from './views/ExerciseView.vue';
-import EquipmentView from './views/EquipmentView.vue';
 import MuscleGroupView from './views/MuscleGroupView.vue';
 import WorkoutView from './views/WorkoutView.vue';
 import DashboardView from './views/DashboardView.vue';
@@ -42,15 +42,13 @@ const notice = ref('');
 const tabs = [
   { id: 'dashboard', name: 'Dashboard' },
   { id: 'workouts', name: 'Workouts' },
-  { id: 'exercises', name: 'Exercises' },
-  { id: 'equipment', name: 'Equipment' },
+  { id: 'exercises', name: 'Equipment' },
   { id: 'groups', name: 'Muscle groups' },
 ];
 const views = {
   dashboard: DashboardView,
   workouts: WorkoutView,
   exercises: ExerciseView,
-  equipment: EquipmentView,
   groups: MuscleGroupView,
 };
 const activeProps = computed(() =>
@@ -77,6 +75,7 @@ const activeProps = computed(() =>
         deleting: deleting.value,
         editingId: editingId.value,
         trainerWorkout: trainerWorkout.value,
+        saveDraftTrainer,
       }
     : active.value === 'exercises'
     ? {
@@ -118,6 +117,7 @@ const activeEvents = computed(() =>
         'update-exercise': updateExercise,
         'remove-many': removeExerciseSelections,
         'delete-many': removeWorkouts,
+        'draft-trainer': openDraftTrainer,
         trainer: (workout) => {
           trainerWorkout.value = workout;
         },
@@ -143,6 +143,7 @@ const activeEvents = computed(() =>
     : active.value === 'exercises'
     ? {
         catalogChanged,
+        trainer: openDraftTrainer,
         add,
         move,
         save: name => save(name, { fromExercises: true }),
@@ -155,8 +156,6 @@ const activeEvents = computed(() =>
           draft.value.pop();
         },
       }
-    : active.value === 'equipment'
-    ? { catalogChanged }
     : {}
 );
 function catalogChanged(data, message) {
@@ -376,6 +375,31 @@ function removeSchedule(value) {
     schedules.value = await request('/api/schedule');
   }, 'Schedule removed.');
 }
+let draftTrainerSaver;
+function openDraftTrainer() {
+  if (saving.value || deleting.value || !draft.value.length) return;
+  draftTrainerSaver = createDraftTrainerSaver(request, workout => {
+    const index = workouts.value.findIndex(item => item.id === workout.id);
+    if (index >= 0) workouts.value[index] = workout;
+    else workouts.value.unshift(workout);
+  });
+  trainerWorkout.value = { id: editingId.value || 'draft', isDraft: true, name: workoutName.value || 'Untitled workout', exercises: JSON.parse(JSON.stringify(draft.value)) };
+  active.value = 'workouts';
+}
+async function saveDraftTrainer({ name, plan }) {
+  if (saving.value || deleting.value) throw new Error('Please wait for the current operation.');
+  saving.value = true;
+  try {
+    const workout = await draftTrainerSaver({ name, plan, draft: trainerWorkout.value.exercises, editingId: editingId.value });
+    const wasEditing = Boolean(editingId.value);
+    editingId.value = '';
+    workoutName.value = wasEditing ? previousDraft?.name || '' : '';
+    draft.value = wasEditing ? previousDraft?.exercises || [] : [];
+    previousDraft = null;
+    returnToPlanner = false;
+    notice.value = `Saved ${workout.name} and its Trainer Mode plan.`;
+  } finally { saving.value = false; }
+}
 function add(exercise) {
   if (saving.value || draft.value.length >= 100) return;
   draft.value.push({ ...exercise, selectionId: crypto.randomUUID() });
@@ -396,7 +420,7 @@ function removeExerciseSelections(ids) {
   if (saving.value || deleting.value) return;
   draft.value = removeDraftSelections(draft.value, ids);
 }
-function editWorkout(workout) {
+async function editWorkout(workout) {
   if (saving.value || deleting.value) return;
   trainerWorkout.value = null;
   active.value = 'workouts';
@@ -410,6 +434,13 @@ function editWorkout(workout) {
   }));
   error.value = '';
   notice.value = `Editing ${workout.name}.`;
+  await nextTick();
+  const editor = document.getElementById('workout-editor');
+  editor?.focus({ preventScroll: true });
+  editor?.scrollIntoView({
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    block: 'start',
+  });
 }
 function cancelEdit() {
   if (saving.value) return;
@@ -528,19 +559,6 @@ onMounted(load);
       </div>
     </header>
     <main>
-      <section
-        v-if="!['dashboard', 'exercises', 'workouts'].includes(active)"
-        class="intro"
-      >
-        <div>
-          <p class="eyebrow">PLAN WITH PURPOSE</p>
-          <h1>Your next workout starts here.</h1>
-          <p>Explore your equipment, find your focus, and build a routine.</p>
-        </div>
-        <button @click="load" :disabled="loading || dashboardBusy">
-          {{ loading ? 'Loading…' : 'Refresh data' }}
-        </button>
-      </section>
       <nav class="tabs pt-5" aria-label="Data views">
         <button
           v-for="tab in tabs"

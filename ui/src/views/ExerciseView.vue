@@ -17,7 +17,7 @@ const props = defineProps({
   workoutName: String,
   editingId: String,
 });
-const emit = defineEmits(['add', 'review', 'undo', 'remove', 'move', 'save', 'update:workoutName', 'catalogChanged']);
+const emit = defineEmits(['add', 'review', 'undo', 'remove', 'move', 'save', 'update:workoutName', 'catalogChanged', 'trainer']);
 const managementBusy = ref(false);
 const manager = ref(null);
 async function manageCard(family, action) {
@@ -27,7 +27,7 @@ async function manageCard(family, action) {
   managing.value = true;
   await nextTick();
   manager.value[action](record);
-  manager.value.$el?.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+  manager.value.$el?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
 }
 const configurations = new Map();
 const batchStatus = ref('');
@@ -75,7 +75,6 @@ const families = computed(() =>
   }))
 );
 const { search, sort, layout, visible } = useCatalogBrowser(families);
-sort.value = 'muscle';
 function clearFilters() {
   group.value = '';
   equipment.value = '';
@@ -86,8 +85,8 @@ function clearFilters() {
   <div class="exercise-shop">
     <header class="shop-heading">
       <div>
-        <p class="shop-kicker">THE EXERCISE COLLECTION</p>
-        <h2>Find your next movement.</h2>
+        <p class="shop-kicker">THE EQUIPMENT COLLECTION</p>
+        <h2>Your equipment. Your next movement.</h2>
         <p>Pick your focus. Choose your equipment. Make it your workout.</p>
       </div>
       <button class="shop-bag-link" :disabled="saving" @click="$emit('review')">
@@ -102,6 +101,7 @@ function clearFilters() {
       ><span><b>02</b> Review your workout</span
       ><span><b>03</b> Make it a routine</span>
     </div>
+    <CatalogToolbar v-model:search="search" v-model:sort="sort" v-model:layout="layout" :count="visible.length" equipment-sort>
     <div class="shop-category-strip">
       <FilterPills
         v-model="group"
@@ -148,6 +148,7 @@ function clearFilters() {
         all-label="All equipment"
       />
     </div>
+    </CatalogToolbar>
     <CollectionPanel v-model="managing" v-model:selected-ids="selectedIds" collection="exercise" :disabled="saving || managementBusy" description="Create new exercises, edit your selection, or delete in bulk.">
       <ExerciseManager
         ref="manager"
@@ -164,13 +165,7 @@ function clearFilters() {
     </CollectionPanel>
     <div class="shop-workspace">
       <section class="shop-results" aria-label="Exercise collection">
-        <CatalogToolbar
-          v-model:search="search"
-          v-model:sort="sort"
-          v-model:layout="layout"
-          :count="visible.length"
-          muscle-sort
-        />
+
         <TransitionGroup
           name="selection"
           tag="div"
@@ -200,6 +195,7 @@ function clearFilters() {
         </div>
       </section>
       <SelectionReference
+        @trainer="$emit('trainer')"
         :draft="draft"
         :name="workoutName"
         :editing-id="editingId"

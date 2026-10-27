@@ -1,0 +1,76 @@
+/* Let content use the viewport without squeezing it beside tablet sidebars. */
+@media (max-width: 1100px) {
+  .shell { padding-inline: clamp(10px, 2.2vw, 24px); }
+  .shop-workspace { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .workout-bag { position: static; width: 100%; }
+  .catalog.shop-products.grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 14px; }
+}
+@media (max-width: 960px) {
+  .checkout-layout { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .checkout-summary { position: static; }
+  .dashboard-grid { display: flex; flex-direction: column; gap: 16px; }
+  .dashboard-sidebar, .dashboard-main { width: 100%; min-width: 0; }
+}
+@media (max-width: 760px) {
+  .shop-heading { padding: 22px 0 18px; gap: 12px; }
+  .shop-heading h2 { font-size: clamp(26px, 4.5vw, 32px); }
+  .shop-heading > div { min-width: 0; }
+  .shop-heading > div > p:last-child { font-size: 13px; line-height: 1.65; }
+  .shop-steps { gap: 10px 20px; padding-block: 12px; }
+  .shop-category-strip { padding-block: 16px 10px; }
+  .collection-management { margin-bottom: 18px; }
+  .muscle-journal .journal-layout { gap: 16px; padding-top: 18px; }
+  .muscle-journal .journal-index nav { margin-top: 0; gap: 10px 16px; }
+  .muscle-journal .journal-index { padding-block: 6px 12px; }
+  .muscle-journal .journal-articles { height: max(280px, 70dvh); padding-inline: 2px 10px; }
+  .muscle-journal .article-diagrams { padding: 16px; gap: 12px; }
+  .muscle-journal .article-diagram { height: auto; width: min(42%, 160px); min-width: 0; flex: 0 1 160px; }
+  .muscle-journal .article-deck { font-size: 16px; margin-bottom: 16px; }
+  .muscle-journal .article-prose { font-size: 14px; line-height: 1.8; }
+}
+@media (max-width: 600px) {
+  .shell { padding-inline: 10px; }
+  .topbar { min-height: 64px; height: auto; padding-block: 10px; gap: 10px; }
+  .topbar .brand { font-size: 28px; letter-spacing: -1.5px; flex-shrink: 0; }
+  .topbar .brand span { font-size: 10px; margin-left: 3px; }
+  .topbar > div { gap: 8px; min-width: 0; }
+  .topbar > div > button { font-size: 12px; padding: 8px 10px; min-height: 38px; }
+  .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding-top: 12px; }
+  .tabs button { min-width: 0; min-height: 42px; padding: 7px 4px; font-size: 12px; white-space: normal; }
+  .panel, .dashboard .panel { padding: 14px; }
+  .dashboard-welcome, .weekly-checkin { padding: 16px; }
+  .dashboard-main, .dashboard-sidebar { gap: 14px; }
+  .shop-heading { padding-block: 18px 14px; }
+  .shop-heading h2, .muscle-journal .journal-heading h1 { font-size: 28px; }
+  .toolbar-main { gap: 12px; }
+  .toolbar-main > *, .sort-control, .view-toggle { min-width: 0; }
+  .exercise-shop .toolbar .search { min-width: 0; flex-basis: 100%; }
+  .toolbar .pills { flex-wrap: wrap; gap: 6px; }
+  .shop-utility { gap: 10px; flex-wrap: wrap; }
+  .shop-products .card-content, .saved-products .card-content { padding: 14px; }
+  .workout-bag, .checkout-summary { padding: 16px; }
+  .checkout-item { padding-block: 16px; }
+  .catalog.list .data-card { grid-template-columns: 100px minmax(0, 1fr); }
+  .catalog.list .card-content { padding: 12px; }
+  .catalog.list .image-placeholder { min-width: 0; }
+  .exercise-manager { padding: 14px; }
+  .collection-management > summary { padding: 14px; }
+  .management-actions > .row-actions { display: flex; flex-wrap: wrap; }
+  .management-actions > .row-actions > button { flex: 1 1 140px; }
+  .management-selection { flex-wrap: wrap; gap: 10px; }
+  .catalog-form, .catalog-form > fieldset { gap: 12px; max-width: 100%; }
+  .catalog-form fieldset fieldset { padding: 12px; }
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { min-width: 0; max-width: 100%; font-size: 16px; }
+  .selection-close-dialog { width: calc(100vw - 20px); padding: 20px; }
+  .trainer-step, .trainer-current-details { min-width: 0; }
+  .muscle-journal .reader-controls { gap: 8px; padding-top: 12px; margin-top: 12px; }
+}
+@media (max-width: 479px) {
+  .catalog.shop-products.grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .exercise-product .reference-photo > img { height: 220px; }
+  .checkout-item { grid-template-columns: 60px minmax(0, 1fr); gap: 10px; }
+  .cart-photo { height: 74px; }
+  .cart-item-info h4 { font-size: 15px; overflow-wrap: anywhere; }
+}
+.set-table-scroll { min-width: 0; max-width: 100%; overflow-x: auto; }
+.set-table-scroll table { width: 100%; min-width: 360px; }

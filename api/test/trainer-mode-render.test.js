@@ -41,7 +41,9 @@ test('workout builder offers an optional trainer step without blocking ordinary 
     assert.ok(step.includes('Push day'));
     assert.ok(step.includes('Set up one exercise at a time.'));
     assert.ok(step.includes('Weight by set'));
-    assert.ok(step.includes('Full workout details'));
+    assert.ok(step.includes('Workout details'));
+    assert.ok(step.includes('Preview full workout'));
+    assert.ok(step.includes('aria-haspopup="dialog"'));
     assert.ok(step.includes('Seated Chest Press'));
     assert.ok(step.includes('Attachment: None'));
     assert.ok(!step.includes('Selected algorithm:'));
@@ -140,8 +142,8 @@ test('workout builder offers an optional trainer step without blocking ordinary 
     assert.ok(!blank.includes('<table'));
 
     assert.ok(step.includes('Your workout is already saved.'));
-    assert.ok(step.includes('Configure Trainer Mode'));
-    assert.ok(step.includes('Skip for now'));
+    assert.ok(!step.includes('Configure Trainer Mode'));
+    assert.ok(step.includes('Back to workout'));
     assert.ok(!step.includes('Save workout'));
     assert.ok(!step.includes('Delete workout'));
   } finally {

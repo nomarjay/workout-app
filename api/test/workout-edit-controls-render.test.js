@@ -16,8 +16,14 @@ test('routine editor exposes movement, equipment, attachment, ordering and separ
     const props = { catalog, workouts: [saved], draft: [cable, { ...cable, selectionId: 'repeat' }], workoutName: 'My edited routine', saving: false, deleting: '', editingId: 'saved' };
     const html = await renderToString(createSSRApp(Workout, props));
     for (const text of ['Manage workout collection', 'Save changes', 'Cancel editing']) assert.ok(html.includes(text), text);
-    for (const text of ['Equipment / movement', 'Select exercise 1: Seated Row', 'Select routine Saved routine', 'Select Saved routine for management', 'Edit workout', 'Delete workout']) assert.ok(!html.includes(text), text);
-    assert.ok(!/class="collection-management" open/.test(html));
+    for (const text of ['Equipment / movement', 'Select exercise 1: Seated Row', 'Select Saved routine for management']) assert.ok(html.includes(text), text);
+    for (const text of ['Select routine Saved routine', 'Edit workout', 'Delete workout']) assert.ok(!html.includes(text), text);
+    assert.ok(/class="collection-management" open/.test(html), 'Starting an edit opens the controls immediately');
+    assert.ok(html.includes('id="workout-editor"'), 'Editing has a stable scroll destination');
+    const browsing = await renderToString(createSSRApp(Workout, { ...props, editingId: '' }));
+    assert.ok(!/class="collection-management" open/.test(browsing), 'Management stays closed during ordinary browsing');
+    assert.ok(!browsing.includes('Select exercise 1: Seated Row'));
+    assert.ok(!browsing.includes('Select Saved routine for management'));
     assert.equal((html.match(/class="collection-management"/g) || []).length, 1, 'Only the master workout panel is rendered, even with an active draft');
     assert.ok(!html.includes('Manage workout exercises'), 'There is no second editing panel to open');
     assert.ok(html.indexOf('Manage workout collection') < html.indexOf('class="workout-checkout"'), 'The master panel is at the top of the workout view');

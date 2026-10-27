@@ -124,7 +124,7 @@ test('collection, workout bag, and checkout render selected equipment and preser
       workoutName: 'Back day',
     });
     for (const text of [
-      'Find your next movement.',
+      'Your equipment. Your next movement.',
       'Train by muscle group',
       'Workout bag',
       'Seated Row',

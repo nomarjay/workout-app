@@ -7,7 +7,8 @@ import {
   defaultTrainerAlgorithm,
   algorithmSetPlan,
 } from '../utils/trainerAlgorithms.js';
-import TrainerSetGuide from './TrainerSetGuide.vue';
+import TrainerWorkoutDetails from './TrainerWorkoutDetails.vue';
+import WorkoutPreviewDialog from './WorkoutPreviewDialog.vue';
 import { suggestedLoad } from '../utils/training.js';
 import {
   barResistance,
@@ -15,13 +16,16 @@ import {
   totalLoad,
   exerciseLabel,
 } from '../utils/equipment.js';
-const props = defineProps({ workout: { type: Object, required: true } });
+const props = defineProps({ workout: { type: Object, required: true }, saveDraft: Function });
+const draftName = ref(props.workout.name);
 const emit = defineEmits(['done']);
-const configuring = ref(false);
 const assignments = ref([]);
 const { activeIndex, completed, markDirty, completeExercise, resetProgress } =
   useTrainerProgress(assignments);
 const editor = ref(null);
+const previewOpen = ref(false);
+const selectedIndex = ref(0);
+watch(activeIndex, index => { if (Number.isInteger(index)) selectedIndex.value = index; }, { flush: 'sync' });
 async function selectExercise(index) {
   activeIndex.value = index;
   await nextTick();
@@ -109,10 +113,10 @@ async function load() {
         },
       })
     );
-    const response = await fetch(path);
-    const data = await response.json();
+    const response = props.workout.isDraft ? null : await fetch(path);
+    const data = response ? await response.json() : null;
     if (
-      !response.ok &&
+      response && !response.ok &&
       !(
         response.status === 404 &&
         data.error === 'Trainer Mode has not been assigned to this workout.'
@@ -120,7 +124,7 @@ async function load() {
     ) {
       throw new Error(data.error || 'Could not load Trainer Mode.');
     }
-    const plan = response.ok ? data : null;
+    const plan = response?.ok ? data : null;
     algorithm.value =
       plan?.algorithm || structuredClone(defaultTrainerAlgorithm);
     needsReview.value = Boolean(plan?.needsReview);
@@ -203,20 +207,19 @@ async function save() {
   busy.value = true;
   error.value = '';
   try {
-    await read(
+    const body = {
+      weightUnit: weightUnit.value,
+      algorithm: algorithm.value,
+      exercises: assignments.value.map(item => ({ ...item, referenceMaxWeight: item.oneRepMax, weightIncrement: 0.01, loadMode: 'adaptive' })),
+    };
+    if (props.workout.isDraft) {
+      if (!props.saveDraft) throw new Error('Could not save this draft workout.');
+      await props.saveDraft({ name: draftName.value, plan: body });
+    } else await read(
       await fetch(path, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          weightUnit: weightUnit.value,
-          algorithm: algorithm.value,
-          exercises: assignments.value.map((item) => ({
-            ...item,
-            referenceMaxWeight: item.oneRepMax,
-            weightIncrement: 0.01,
-            loadMode: 'adaptive',
-          })),
-        }),
+        body: JSON.stringify(body),
       })
     );
     emit('done', true);
@@ -240,9 +243,10 @@ onMounted(load);
         <p class="eyebrow">TRAINER MODE</p>
         <h2 id="trainer-heading">{{ workout.name }}</h2>
         <p class="hint">
-          Set up one exercise at a time. Your workout is already saved.
+          Set up one exercise at a time. {{ workout.isDraft ? 'Save the routine and plan together when ready.' : 'Your workout is already saved.' }}
         </p>
       </header>
+      <label v-if="workout.isDraft">Workout name<input v-model="draftName" :disabled="busy" maxlength="100" required /></label>
       <p v-if="loading" role="status">Loading Trainer Mode…</p>
       <p v-if="error" class="message error" role="alert">
         {{ error }}
@@ -259,7 +263,7 @@ onMounted(load);
         The exercises changed. Review the settings for each exercise.
       </p>
       <div
-        v-if="configuring && assignments.length"
+        v-if="assignments.length"
         class="grid items-start gap-6 min-[900px]:grid-cols-[200px_minmax(0,1fr)]"
       >
         <nav
@@ -508,7 +512,7 @@ onMounted(load);
                   busy || loading || completed.length !== assignments.length
                 "
               >
-                {{ busy ? 'Saving…' : 'Save Trainer Mode' }}</button
+                {{ busy ? 'Saving…' : workout.isDraft ? 'Save workout & Trainer Mode' : 'Save Trainer Mode' }}</button
               ><button
                 type="button"
                 :disabled="busy"
@@ -520,49 +524,12 @@ onMounted(load);
           </footer>
         </form>
       </div>
-      <div v-else class="row-actions">
-        <button
-          class="primary"
-          :disabled="loading || !assignments.length"
-          @click="configuring = true"
-        >
-          Configure Trainer Mode</button
-        ><button @click="emit('done', false)">Skip for now</button>
-      </div>
+      <div v-else class="row-actions"><button type="button" @click="emit('done', false)">Back to workout</button></div>
     </section>
-    <aside class="panel min-w-0" aria-labelledby="full-workout-heading">
-      <h2 id="full-workout-heading">Full workout details</h2>
-      <p class="hint">
-        {{ workout.exercises.length }} exercises · {{ weightUnit }} ·
-        {{ algorithm.name }}
-      </p>
-      <ol class="m-0 pl-5" aria-label="Workout exercises">
-        <li
-          v-for="(exercise, index) in workout.exercises"
-          :key="index"
-          class="py-2"
-        >
-          <strong>{{ exerciseLabel(exercise) }}</strong>
-          <p class="hint my-1">
-            Attachment: {{ exercise.attachment || 'None' }}
-          </p>
-          <p v-if="exercise.primaryMuscles?.length" class="hint my-1">
-            Primary muscles: {{ exercise.primaryMuscles.join(', ') }}
-          </p>
-          <p v-if="exercise.secondaryMuscles?.length" class="hint my-1">
-            Secondary muscles: {{ exercise.secondaryMuscles.join(', ') }}
-          </p>
-        </li>
-      </ol>
-      <TrainerSetGuide
-        :workout="workout"
-        :assignments="assignments"
-        :algorithm="algorithm"
-        :weight-unit="weightUnit"
-        :loading="loading"
-        detailed
-        class="static! mt-5 max-h-none! border-0! p-0! shadow-none!"
-      />
+    <aside class="panel min-w-0 trainer-current-details" aria-label="Selected exercise details">
+      <TrainerWorkoutDetails :workout="workout" :exercise-index="selectedIndex" :assignments="assignments" :algorithm="algorithm" :weight-unit="weightUnit" :loading="loading" />
+      <button type="button" class="mt-5 w-full" aria-haspopup="dialog" :disabled="loading || !assignments.length" @click="previewOpen = true">Preview full workout</button>
     </aside>
+    <WorkoutPreviewDialog :open="previewOpen" :workout="workout" :assignments="assignments" :algorithm="algorithm" :weight-unit="weightUnit" :loading="loading" @close="previewOpen = false" />
   </div>
 </template>

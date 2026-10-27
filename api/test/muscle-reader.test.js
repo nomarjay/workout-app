@@ -1,0 +1,73 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createRenderer, nextTick, ref } from 'vue';
+import { readingBoundary, useMuscleReader } from '../../ui/src/composables/useMuscleReader.js';
+
+test('reader boundary checks preserve scrolling through long content', () => {
+  assert.equal(readingBoundary({ scrollTop: 50, clientHeight: 300, scrollHeight: 1000 }, 1), false);
+  assert.equal(readingBoundary({ scrollTop: 700, clientHeight: 300, scrollHeight: 1000 }, 1), true);
+  assert.equal(readingBoundary({ scrollTop: 0, clientHeight: 300, scrollHeight: 1000 }, -1), true);
+  assert.equal(readingBoundary(null, 1), false);
+});
+
+test('focused reader advances only at boundaries, blocks momentum skips, and supports reverse, touch, keys, and filtering', async () => {
+  const originalNow = Date.now;
+  let now = 1000, focused = 0, state, app;
+  Date.now = () => now;
+  const reader = { scrollTop: 100, clientHeight: 300, scrollHeight: 1000, focus() { focused++; } };
+  const ids = ref(['chest', 'back', 'arms']);
+  const event = deltaY => ({ deltaY, deltaX: 0, deltaMode: 0, prevented: false, preventDefault() { this.prevented = true; } });
+  try {
+    const renderer = createRenderer({ createComment: () => ({}), insert() {}, remove() {}, parentNode: () => null, nextSibling: () => null, patchProp() {}, createElement: () => ({}), createText: () => ({}), setText() {}, setElementText() {} });
+    app = renderer.createApp({ setup() { state = useMuscleReader(ref(reader), () => ids.value); return () => null; } });
+    app.mount({});
+    assert.equal(state.activeId.value, 'chest');
+    assert.equal(state.hasPrevious.value, false);
+    const normal = event(100);
+    state.wheel(normal);
+    assert.equal(normal.prevented, false);
+    assert.equal(state.activeId.value, 'chest');
+    reader.scrollTop = 700;
+    state.wheel(event(30));
+    assert.equal(state.activeId.value, 'chest', 'Small movements accumulate before transitioning');
+    state.wheel(event(40));
+    await nextTick();
+    assert.equal(state.activeId.value, 'back');
+    assert.equal(reader.scrollTop, 0);
+    reader.scrollTop = 700;
+    state.wheel(event(100));
+    assert.equal(state.activeId.value, 'back', 'Momentum cannot skip the next article');
+    now += 1000;
+    reader.scrollTop = 0;
+    state.wheel(event(-100));
+    await nextTick();
+    assert.equal(state.activeId.value, 'chest');
+    assert.equal(reader.scrollTop, 1000, 'Reverse scrolling returns to the previous article end');
+    await state.select('back');
+    now += 1000;
+    reader.scrollTop = 700;
+    const key = { key: 'PageDown', target: reader, currentTarget: reader, prevented: false, preventDefault() { this.prevented = true; } };
+    state.keydown(key);
+    await nextTick();
+    assert.equal(state.activeId.value, 'arms');
+    assert.equal(key.prevented, true);
+    assert.equal(state.hasNext.value, false);
+    assert.equal(state.move(1), false, 'The final group does not wrap unexpectedly');
+    now += 1000;
+    reader.scrollTop = 0;
+    state.touchstart({ touches: [{ clientY: 100 }] });
+    state.touchend({ changedTouches: [{ clientY: 200 }] });
+    await nextTick();
+    assert.equal(state.activeId.value, 'back');
+    ids.value = ['arms'];
+    await nextTick(); await nextTick();
+    assert.equal(state.activeId.value, 'arms');
+    assert.equal(reader.scrollTop, 0);
+    ids.value = [];
+    await nextTick();
+    assert.equal(state.activeId.value, null);
+    assert.equal(state.hasPrevious.value, false);
+    assert.equal(state.hasNext.value, false);
+    assert.ok(focused > 0);
+  } finally { app?.unmount(); Date.now = originalNow; }
+});

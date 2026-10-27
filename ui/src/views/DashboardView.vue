@@ -217,7 +217,7 @@ async function calendarAction({ date, action }) {
   await nextTick();
   document
     .getElementById('daily-heading')
-    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    ?.scrollIntoView({ behavior: 'auto', block: 'start' });
 }
 watch(
   () => props.profileId,
