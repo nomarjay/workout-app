@@ -2,11 +2,18 @@ services:
   mongodb:
     image: mongo:8.0
     ports:
-      - "127.0.0.1:27017:27017"
+      - '127.0.0.1:27017:27017'
     volumes:
       - mongodb_data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand({ ping: 1 }).ok"]
+      test:
+        [
+          'CMD',
+          'mongosh',
+          '--quiet',
+          '--eval',
+          'db.adminCommand({ ping: 1 }).ok',
+        ]
       interval: 5s
       timeout: 5s
       retries: 20

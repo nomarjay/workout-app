@@ -1,7 +1,10 @@
 {
   "name": "workout-app",
   "private": true,
-  "workspaces": ["ui", "api"],
+  "workspaces": [
+    "ui",
+    "api"
+  ],
   "scripts": {
     "dev": "concurrently -n api,web -c green,cyan \"npm run dev -w api\" \"npm run dev -w ui\"",
     "build": "npm run build -w ui",
@@ -9,6 +12,10 @@
     "test": "npm run test -w api",
     "db:check": "npm run db:check -w api"
   },
-  "devDependencies": { "concurrently": "^9.1.2" },
-  "engines": { "node": ">=22" }
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
 }

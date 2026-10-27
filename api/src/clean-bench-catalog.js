@@ -8,13 +8,21 @@ try {
   for (const record of records) {
     const blank = !String(record.name ?? '').trim();
     if (blank) {
-      await collection.updateOne({ _id: record._id }, { $set: {
-        catalogExcluded: true, catalogExclusionReason: 'Unnamed exercise',
-      } });
+      await collection.updateOne(
+        { _id: record._id },
+        {
+          $set: {
+            catalogExcluded: true,
+            catalogExclusionReason: 'Unnamed exercise',
+          },
+        }
+      );
       excluded++;
     }
   }
-  console.log(`Excluded ${excluded} unnamed records from the catalog. Original documents retained.`);
+  console.log(
+    `Excluded ${excluded} unnamed records from the catalog. Original documents retained.`
+  );
 } catch (error) {
   console.error(formatDatabaseError(error));
   process.exitCode = 1;

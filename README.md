@@ -16,6 +16,12 @@ npm run dev
 Open http://localhost:5173. Vite proxies `/api` to port 3001.
 Configure `MONGODB_URI` and `MONGODB_DB` in `api/.env` if needed.
 
+The API listens while MongoDB initializes and returns HTTP 503 until it is ready.
+Temporary startup connection errors retry automatically with delays of 1–30 seconds;
+invalid credentials or initialization errors still stop startup. Connection selection
+waits up to 15 seconds. If MongoDB becomes unavailable later, requests return HTTP 503;
+use **Reload data** once connectivity returns. Failed writes are not automatically replayed.
+
 ## Dashboard homepage
 
 The app opens on **Dashboard**. Expand Profile settings in the client profile card to select a saved user,
@@ -60,7 +66,7 @@ assignments while preserving completed logs.
 `api/data/catalog.js` merges exercise entries with equipment muscle details and
 exports the normalized seeds. Each exercise has `equipmentId`, `muscleGroupId`
 (primary category), `muscleGroupIds` (all primary and secondary groups), muscle
-names, and a nullable attachment. Seeded pin cable machine attachments are null.
+names, and a nullable attachment. Seeded Multifunctional Cable Machine attachments are null.
 The live catalog is stored in `catalog_exercises` and `catalog_equipment`.
 On first startup, the current file-based library seeds these collections using
 stable IDs. `catalog_state` records initialization so later restarts preserve
@@ -90,32 +96,32 @@ after catalog changes, and deleted options are removed from the draft.
 
 ## API
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| GET | /api/health | Database connectivity |
-| GET | /api/catalog | Groups, equipment, attachments and exercises |
-| GET | /api/muscle-groups | Muscle groups |
-| GET | /api/profile | Client profile, or null if none exists |
-| POST | /api/profile | Create the client profile |
-| PUT | /api/profile | Update the client profile |
-| DELETE | /api/profile | Delete profile information |
-| GET | /api/schedule | Dated workout assignments |
-| PUT | /api/schedule/:date | Assign or replace `{ workoutId, durationMinutes }` on a date |
-| DELETE | /api/schedule/:date | Remove the assignment for a date |
-| GET | /api/exercises | Exercise definitions with equipment options |
-| GET | /api/exercises/:id | One exercise definition |
-| POST | /api/exercises | Create an exercise definition |
-| PUT | /api/exercises/:id | Update an exercise definition |
-| DELETE | /api/exercises/:id | Delete an unused exercise |
-| GET | /api/equipment | Equipment types |
-| GET | /api/equipment/:id | One equipment type |
-| POST | /api/equipment | Create equipment |
-| PUT | /api/equipment/:id | Update equipment |
-| DELETE | /api/equipment/:id | Delete unused equipment |
-| GET | /api/workouts | Saved workouts |
-| POST | /api/workouts | Save `{ "name": "Push day", "exerciseIds": ["catalog exercise ID"] }` |
-| DELETE | /api/workouts/:id | Delete a workout |
-| PUT | /api/workouts/:id | Update a workout name and ordered selections |
+| Method | Path                | Purpose                                                               |
+| ------ | ------------------- | --------------------------------------------------------------------- |
+| GET    | /api/health         | Database connectivity                                                 |
+| GET    | /api/catalog        | Groups, equipment, attachments and exercises                          |
+| GET    | /api/muscle-groups  | Muscle groups                                                         |
+| GET    | /api/profile        | Client profile, or null if none exists                                |
+| POST   | /api/profile        | Create the client profile                                             |
+| PUT    | /api/profile        | Update the client profile                                             |
+| DELETE | /api/profile        | Delete profile information                                            |
+| GET    | /api/schedule       | Dated workout assignments                                             |
+| PUT    | /api/schedule/:date | Assign or replace `{ workoutId, durationMinutes }` on a date          |
+| DELETE | /api/schedule/:date | Remove the assignment for a date                                      |
+| GET    | /api/exercises      | Exercise definitions with equipment options                           |
+| GET    | /api/exercises/:id  | One exercise definition                                               |
+| POST   | /api/exercises      | Create an exercise definition                                         |
+| PUT    | /api/exercises/:id  | Update an exercise definition                                         |
+| DELETE | /api/exercises/:id  | Delete an unused exercise                                             |
+| GET    | /api/equipment      | Equipment types                                                       |
+| GET    | /api/equipment/:id  | One equipment type                                                    |
+| POST   | /api/equipment      | Create equipment                                                      |
+| PUT    | /api/equipment/:id  | Update equipment                                                      |
+| DELETE | /api/equipment/:id  | Delete unused equipment                                               |
+| GET    | /api/workouts       | Saved workouts                                                        |
+| POST   | /api/workouts       | Save `{ "name": "Push day", "exerciseIds": ["catalog exercise ID"] }` |
+| DELETE | /api/workouts/:id   | Delete a workout                                                      |
+| PUT    | /api/workouts/:id   | Update a workout name and ordered selections                          |
 
 Exercise writes accept `{ name, muscleGroupId, equipmentOptions }`. Each option
 has a stable `key`, `equipmentId`, nullable `attachmentId`, `primaryMuscles` and
@@ -127,16 +133,11 @@ return 409. Workout selections accept `{ exerciseId, equipmentOptionKey, attachm
 
 ## Scripts
 
-- 
-pm run dev`: frontend and API with reload
-- 
-pm run build`: production frontend
-- 
-pm start`: API and built frontend
-- 
-pm run db:check`: initialize and check MongoDB
-- 
-pm test`: catalog relationship and HTTP workout tests using an in-memory database stub
+- pm run dev`: frontend and API with reload
+- pm run build`: production frontend
+- pm start`: API and built frontend
+- pm run db:check`: initialize and check MongoDB
+- pm test`: catalog relationship and HTTP workout tests using an in-memory database stub
 
 Selectorized isolation movements use an exercise-level `isIsolation` boolean.
 The UI marks exercise variants with this flag set to true. Legacy
@@ -144,18 +145,16 @@ isolation equipment ID 2 resolves to selectorized equipment ID 1; the retired
 category is hidden. Unrecognized equipment is retained and flagged for correction
 instead of preventing the catalog from loading.
 
-
 Equipment metadata is served from `catalog_equipment`; legacy collections are retained. In the equipment data files,
-`equipment-type` replaces the machine-level 
-ame` property and contains the full type
-(e.g. `Pin Cable Machine`). Exercise names remain under 
+`equipment-type` replaces the machine-level
+ame`property and contains the full type
+(e.g.`Multifunctional Cable Machine`). Exercise names remain under 
 ame`. Exercise labels show
-the equipment type first, e.g. `Pin Cable Machine · Seated Row`. Equipment sorting
+the equipment type first, e.g. `Multifunctional Cable Machine · Seated Row`. Equipment sorting
 uses that full type, then exercise name. The builder Arrange button changes exercise
 order; changing catalog sorting does not change the draft.
 Selection feedback, undo, collapsible previews, and animated reorder/add/remove
 interactions support building a routine. Reduced-motion preferences disable animations.
-
 
 Exercise cards group matching names by stripping equipment qualifiers and “Seated,”
 while preserving movement differences such as incline. Each card offers only
@@ -165,6 +164,7 @@ reference lists every draft exercise by name, equipment, and attachment.
 Workout POST accepts `selections: [{ exerciseId, attachment }]`; the original
 `exerciseIds` request format remains supported. Attachments are validated against
 the attachment catalog and saved per selected exercise.
+
 # Percentage-based training
 
 Trainer Mode accepts an optional exercise-specific 1RM (100%). Enter the 1RM,
@@ -194,4 +194,3 @@ reports variation across people and exercises;
 evaluates Epley and other equations in a specific older-adult population.
 Inverse Epley with reserve is a transparent planning heuristic, not an
 individualized scientifically validated prescription.
-

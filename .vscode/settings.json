@@ -1,5 +1,3 @@
 {
-          "dataworkspace.excludedProjects": [
-                    "workout-app/workout-app.sqlproj"
-          ]
+  "dataworkspace.excludedProjects": ["workout-app/workout-app.sqlproj"]
 }

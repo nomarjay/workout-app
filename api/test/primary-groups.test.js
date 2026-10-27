@@ -4,7 +4,11 @@ import { belongsToPrimaryGroup } from '../../ui/src/utils/muscleGroups.js';
 import { normalizeExercise } from '../data/catalog.js';
 
 test('bench belongs to Chest while secondary triceps and delts do not classify it as Arms or Shoulders', () => {
-  const bench = normalizeExercise({ name: 'Smith Machine Bench Press', equipment: 'Smith Machine', muscleGroupId: 1 });
+  const bench = normalizeExercise({
+    name: 'Smith Machine Bench Press',
+    equipment: 'Smith Machine',
+    muscleGroupId: 1,
+  });
   assert.ok(bench.secondaryMuscles.includes('Triceps'));
   assert.equal(belongsToPrimaryGroup(bench, '1'), true);
   assert.equal(belongsToPrimaryGroup(bench, 3), false);

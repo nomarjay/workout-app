@@ -61,7 +61,6 @@ to avoid applying settings to the wrong occurrence. Skipping or cancelling does
 not change saved prescriptions. The UI submits assignments to this API; training
 calculations remain in the backend. Automatic progression is not implemented.
 
-
 ## Adaptive set plans
 
 Trainer Mode's UI saves `loadMode: "adaptive"` and an optional `weightIncrement`
@@ -81,19 +80,18 @@ Adaptive calculations include `setPlan` (first 100 sets) and sum each set's
 weight times reps for volume, with the same target load for each working set. Existing API plans without loadMode retain fixed-load calculations;
 editing and saving through the UI opts them into adaptive planning.
 
-
 ## Algorithm maker and default template
 
 Trainer Mode selects `Default · Four-set progression` when no saved algorithm
 snapshot exists. Every exercise uses the same selected template with its own
 `referenceMaxWeight`, equipment increment, and tempo. The default sets are:
 
-| Set | Label | % of template maximum | Reps |
-| --- | --- | --- | --- |
-| 1 | Warm-up | 35% | 12–15 |
-| 2 | Set 2 | 50% | 10 |
-| 3 | Set 3 | 75% | 8 |
-| 4 | Set 4 | 90–95% | 6 |
+| Set | Label   | % of template maximum | Reps  |
+| --- | ------- | --------------------- | ----- |
+| 1   | Warm-up | 35%                   | 12–15 |
+| 2   | Set 2   | 50%                   | 10    |
+| 3   | Set 3   | 75%                   | 8     |
+| 4   | Set 4   | 90–95%                | 6     |
 
 The reference maximum is entered explicitly; this template does not infer that
 the prescribed reps are achievable at each percentage. Weight ranges are rounded
@@ -112,7 +110,6 @@ workout plans. Calculation returns individual weight/rep ranges, warm-up flags,
 and volume/rep minimum and maximum totals (warm-up included). Existing plans
 without an algorithm retain their legacy API calculation until edited and saved.
 
-
 Trainer Mode retains the original maximum/1RM entry, Calculate button, min/max
 and working weights, reps, sets, reserve reps, and tempo alongside the algorithm
 maker. Calculate fills these settings from the selected workout algorithm.
@@ -120,7 +117,6 @@ Each exercise can opt out with `useAlgorithm: false` to use manual settings.
 The UI no longer asks for an equipment increment: algorithm percentages are
 calculated to 0.01 units (for example, 35% of 280 lb is 98 lb). Saved legacy
 increment fields remain readable for older API clients.
-
 
 ## Smith machine bar resistance
 

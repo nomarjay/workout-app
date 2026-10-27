@@ -2,13 +2,29 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ObjectId } from 'mongodb';
 import { createApp } from '../src/app.js';
-import { trainerPrescription, calculateTrainerWorkout } from '../src/trainer-mode.js';
+import {
+  trainerPrescription,
+  calculateTrainerWorkout,
+} from '../src/trainer-mode.js';
 import { memoryDb } from './helpers/memory-db.js';
 
-const settings = exerciseIndex => ({ exerciseIndex, minWeight: 10, maxWeight: 50,
-  workingWeight: 25.5, reps: 10, sets: 3, tempo: 'slow-and-controlled' });
-const body = () => ({ weightUnit: 'kg', exercises: [settings(0), settings(1)] });
-const exercises = [{ exerciseId: 'row', equipmentId: 4 }, { exerciseId: 'row', equipmentId: 4 }];
+const settings = (exerciseIndex) => ({
+  exerciseIndex,
+  minWeight: 10,
+  maxWeight: 50,
+  workingWeight: 25.5,
+  reps: 10,
+  sets: 3,
+  tempo: 'slow-and-controlled',
+});
+const body = () => ({
+  weightUnit: 'kg',
+  exercises: [settings(0), settings(1)],
+});
+const exercises = [
+  { exerciseId: 'row', equipmentId: 4 },
+  { exerciseId: 'row', equipmentId: 4 },
+];
 
 test('trainer handler validates bounds, occurrences, numeric inputs, and tempo', () => {
   const workout = { exercises };
@@ -18,9 +34,17 @@ test('trainer handler validates bounds, occurrences, numeric inputs, and tempo',
   assert.equal(result.exercises[0].volume, 765);
   assert.equal(prescription.exercises[0].totalReps, undefined);
   for (const change of [
-    { minWeight: 30 }, { maxWeight: 20 }, { workingWeight: -1 }, { workingWeight: '25' },
-    { reps: 0 }, { sets: 1.5 }, { tempo: 'anything' }, { workingWeight: Infinity },
-    { exerciseIndex: 1 }, { exerciseIndex: 2 }, { minWeight: null },
+    { minWeight: 30 },
+    { maxWeight: 20 },
+    { workingWeight: -1 },
+    { workingWeight: '25' },
+    { reps: 0 },
+    { sets: 1.5 },
+    { tempo: 'anything' },
+    { workingWeight: Infinity },
+    { exerciseIndex: 1 },
+    { exerciseIndex: 2 },
+    { minWeight: null },
     { sets: Number.MAX_SAFE_INTEGER, reps: 10 },
     { maxWeight: Number.MAX_VALUE, workingWeight: Number.MAX_VALUE },
   ]) {
@@ -28,24 +52,40 @@ test('trainer handler validates bounds, occurrences, numeric inputs, and tempo',
     Object.assign(invalid.exercises[0], change);
     assert.throws(() => trainerPrescription(invalid, workout));
   }
-  assert.throws(() => trainerPrescription({ ...body(), weightUnit: 'stones' }, workout));
-  assert.throws(() => trainerPrescription({ ...body(), exercises: [settings(0)] }, workout));
+  assert.throws(() =>
+    trainerPrescription({ ...body(), weightUnit: 'stones' }, workout)
+  );
+  assert.throws(() =>
+    trainerPrescription({ ...body(), exercises: [settings(0)] }, workout)
+  );
   const zero = body();
   zero.exercises[0] = { ...settings(0), minWeight: 0, workingWeight: 0 };
-  assert.equal(calculateTrainerWorkout(trainerPrescription(zero, workout)).exercises[0].volume, 0);
+  assert.equal(
+    calculateTrainerWorkout(trainerPrescription(zero, workout)).exercises[0]
+      .volume,
+    0
+  );
 });
 
 test('Trainer Mode persists separately, detects changed workouts, and cleans up on deletion', async () => {
   const db = memoryDb();
   const id = new ObjectId();
-  const workout = { _id: id, name: 'Rows', exercises: structuredClone(exercises) };
+  const workout = {
+    _id: id,
+    name: 'Rows',
+    exercises: structuredClone(exercises),
+  };
   db.records.workouts.push(workout);
   const before = JSON.stringify(workout);
   const server = createApp(db).listen(0, '127.0.0.1');
-  await new Promise(resolve => server.once('listening', resolve));
+  await new Promise((resolve) => server.once('listening', resolve));
   const base = `http://127.0.0.1:${server.address().port}/api`;
-  const request = (path, method = 'GET', data) => fetch(`${base}/${path}`, { method,
-    headers: { 'Content-Type': 'application/json' }, body: data === undefined ? undefined : JSON.stringify(data) });
+  const request = (path, method = 'GET', data) =>
+    fetch(`${base}/${path}`, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: data === undefined ? undefined : JSON.stringify(data),
+    });
   const path = `trainer-mode/${id}`;
   try {
     assert.equal((await request('trainer-mode')).status, 200);
@@ -60,7 +100,9 @@ test('Trainer Mode persists separately, detects changed workouts, and cleans up 
     assert.equal(plan.needsReview, false);
     assert.equal(plan.workoutId, String(id));
     assert.equal(db.records.trainer_mode.length, 1);
-    const calculated = await (await request(`${path}/calculate`, 'POST')).json();
+    const calculated = await (
+      await request(`${path}/calculate`, 'POST')
+    ).json();
     assert.deepEqual(calculated.totals, { sets: 6, reps: 60, volume: 1530 });
     workout.name = 'Renamed';
     assert.equal((await request(`${path}/calculate`, 'POST')).status, 200);
@@ -79,5 +121,7 @@ test('Trainer Mode persists separately, detects changed workouts, and cleans up 
     await request(path, 'PUT', body());
     assert.equal((await request(`workouts/${id}`, 'DELETE')).status, 204);
     assert.equal(db.records.trainer_mode.length, 0);
-  } finally { await new Promise(resolve => server.close(resolve)); }
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });

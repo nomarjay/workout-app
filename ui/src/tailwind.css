@@ -1,0 +1,6 @@
+/* Keep the existing element defaults; Tailwind utilities override them. */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import './style.css' layer(base);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@source "./**/*.vue";
