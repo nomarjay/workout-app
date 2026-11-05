@@ -5,9 +5,9 @@ import { memoryDb } from './helpers/memory-db.js';
 
 test('equipment muscle information persists through create, edit, and catalog reload', async () => {
   const db = memoryDb();
-  const server = createApp(db).listen(0, '127.0.0.1');
+  const server = createApp(db).listen(0, '0.0.0.0');
   await new Promise((resolve) => server.once('listening', resolve));
-  const base = `http://127.0.0.1:${server.address().port}/api`;
+  const base = `http://0.0.0.0:${server.address().port}/api`;
   const request = (path, method = 'GET', body) =>
     fetch(`${base}/${path}`, {
       method,
@@ -24,7 +24,7 @@ test('equipment muscle information persists through create, edit, and catalog re
     assert.deepEqual(
       template.primaryMuscles,
       [],
-      'Equipment muscles are never inferred from exercise options'
+      'Equipment muscles are never inferred from exercise options',
     );
     const body = {
       'equipment-type': 'My chest station',
@@ -52,17 +52,17 @@ test('equipment muscle information persists through create, edit, and catalog re
     assert.deepEqual(
       db.records.catalog_equipment.find((item) => item._id === equipment.id)
         .secondaryMuscles,
-      body.secondaryMuscles
+      body.secondaryMuscles,
     );
     const reloaded = (await (await request('catalog')).json()).equipment.find(
-      (item) => item.id === equipment.id
+      (item) => item.id === equipment.id,
     );
     assert.deepEqual(reloaded.muscleGroupIds, [1, 3, 6]);
     assert.equal(reloaded.image, body.image);
     assert.equal(
       reloaded.imageAttribution.name,
       'Original photographer',
-      'Copied image URLs keep their source credit'
+      'Copied image URLs keep their source credit',
     );
     const exercise = await request('exercises', 'POST', {
       name: 'Custom press',
@@ -80,12 +80,12 @@ test('equipment muscle information persists through create, edit, and catalog re
     });
     assert.equal(exercise.status, 201);
     const variant = (await (await request('catalog')).json()).exercises.find(
-      (item) => item.equipmentId === equipment.id
+      (item) => item.equipmentId === equipment.id,
     );
     assert.deepEqual(
       variant.primaryMuscles,
       ['Upper Chest'],
-      'Movement muscles remain specific to the exercise'
+      'Movement muscles remain specific to the exercise',
     );
     assert.equal(
       (
@@ -95,15 +95,15 @@ test('equipment muscle information persists through create, edit, and catalog re
           secondaryMuscles: [],
         })
       ).status,
-      200
+      200,
     );
     const cleared = (await (await request('catalog')).json()).equipment.find(
-      (item) => item.id === equipment.id
+      (item) => item.id === equipment.id,
     );
     assert.deepEqual(
       cleared.primaryMuscles,
       [],
-      'Explicit empty selections are preserved instead of inferred again'
+      'Explicit empty selections are preserved instead of inferred again',
     );
     assert.deepEqual(cleared.secondaryMuscles, []);
     assert.equal(
@@ -114,7 +114,7 @@ test('equipment muscle information persists through create, edit, and catalog re
           secondaryMuscles: ['Biceps'],
         })
       ).status,
-      200
+      200,
     );
     const legacyBody = {
       'equipment-type': 'Renamed station',
@@ -123,7 +123,7 @@ test('equipment muscle information persists through create, edit, and catalog re
     };
     assert.equal(
       (await request(`equipment/${equipment.id}`, 'PUT', legacyBody)).status,
-      200
+      200,
     );
     const preserved = await (await request(`equipment/${equipment.id}`)).json();
     assert.deepEqual(preserved.primaryMuscles, ['Lats']);
@@ -136,7 +136,7 @@ test('equipment muscle information persists through create, edit, and catalog re
       assert.equal(
         (await request('equipment', 'POST', { ...body, ...fields })).status,
         400,
-        JSON.stringify(fields)
+        JSON.stringify(fields),
       );
     }
   } finally {

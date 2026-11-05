@@ -26,9 +26,9 @@ test('bulk deletion removes only selected unused exercises and reports protected
     exercises: [{ exerciseId: 'protected', equipmentId: 5 }],
   };
   await db.collection('workouts').insertOne(workout);
-  const server = createApp(db).listen(0, '127.0.0.1');
+  const server = createApp(db).listen(0, '0.0.0.0');
   await new Promise((resolve) => server.once('listening', resolve));
-  const base = `http://127.0.0.1:${server.address().port}/api`;
+  const base = `http://0.0.0.0:${server.address().port}/api`;
   const remove = (body) =>
     fetch(`${base}/exercises/bulk-delete`, {
       method: 'POST',
@@ -51,18 +51,18 @@ test('bulk deletion removes only selected unused exercises and reports protected
     ]);
     assert.deepEqual(result.missingIds, ['already-gone']);
     assert.ok(
-      db.records.catalog_exercises.some((item) => item._id === 'protected')
+      db.records.catalog_exercises.some((item) => item._id === 'protected'),
     );
     assert.ok(
-      db.records.catalog_exercises.some((item) => item._id === 'leave-alone')
+      db.records.catalog_exercises.some((item) => item._id === 'leave-alone'),
     );
     assert.equal(db.records.workouts.length, 1);
     assert.equal(db.records.workouts[0].exercises[0].exerciseId, 'protected');
     const catalog = await (await fetch(`${base}/catalog`)).json();
     assert.ok(
       !catalog.exerciseDefinitions.some((item) =>
-        result.deletedIds.includes(item.id)
-      )
+        result.deletedIds.includes(item.id),
+      ),
     );
     const again = await (
       await remove({ ids: ['unused-a', 'protected'] })

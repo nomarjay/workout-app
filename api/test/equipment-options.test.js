@@ -10,33 +10,33 @@ import { memoryDb } from './helpers/memory-db.js';
 
 test('one movement holds equipment options without merging incline or seated presses', () => {
   const docs = buildExerciseDocuments(
-    Object.values(exerciseCollections).flat()
+    Object.values(exerciseCollections).flat(),
   );
   const bench = docs.find((item) => item.name === 'Bench Press');
   assert.deepEqual(
     bench.equipmentOptions.map((item) => item.equipment),
-    ['Smith Machine']
+    ['Smith Machine'],
   );
   assert.ok(docs.some((item) => item.name === 'Incline Bench Press'));
   assert.ok(docs.some((item) => item.name === 'Seated Chest Press'));
   assert.equal(new Set(docs.map((item) => item.slug)).size, docs.length);
   assert.ok(
     !docs.some((item) =>
-      item.equipmentOptions.some((option) => option.equipment === 'Bodyweight')
-    )
+      item.equipmentOptions.some((option) => option.equipment === 'Bodyweight'),
+    ),
   );
 });
 
 test('API validates the equipment option and saves its snapshot', async () => {
   const db = memoryDb();
   const saved = db.records.workouts;
-  const server = createApp(db).listen(0, '127.0.0.1');
+  const server = createApp(db).listen(0, '0.0.0.0');
   await new Promise((resolve) => server.once('listening', resolve));
   try {
-    const url = `http://127.0.0.1:${server.address().port}`;
+    const url = `http://0.0.0.0:${server.address().port}`;
     const catalog = await (await fetch(`${url}/api/catalog`)).json();
     const bench = catalog.exerciseDefinitions.find(
-      (item) => item.name === 'Bench Press'
+      (item) => item.name === 'Bench Press',
     );
     const post = (option) =>
       fetch(`${url}/api/workouts`, {
@@ -62,7 +62,7 @@ test('API validates the equipment option and saves its snapshot', async () => {
 
 test('references store IDs and reject missing equipment and attachments', () => {
   const document = toReferenceDocument(
-    buildExerciseDocuments(Object.values(exerciseCollections).flat())[0]
+    buildExerciseDocuments(Object.values(exerciseCollections).flat())[0],
   );
   for (const option of document.equipmentOptions) {
     assert.equal(typeof option.equipmentId, 'number');
@@ -76,7 +76,7 @@ test('references store IDs and reject missing equipment and attachments', () => 
         muscleGroupId: 1,
         equipmentOptions: [{ equipment: 'Missing machine' }],
       }),
-    /reference list/
+    /reference list/,
   );
   assert.throws(
     () =>
@@ -87,6 +87,6 @@ test('references store IDs and reject missing equipment and attachments', () => 
           { equipmentId: 1, attachment: 'Missing attachment' },
         ],
       }),
-    /Unknown attachment/
+    /Unknown attachment/,
   );
 });

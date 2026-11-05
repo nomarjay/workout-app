@@ -28,7 +28,7 @@ test('default algorithm keeps the requested percentages, warm-up, and rep ranges
       [50, 50, 10, 10, false],
       [75, 75, 8, 8, false],
       [90, 95, 6, 6, false],
-    ]
+    ],
   );
   assert.deepEqual(
     algorithmSetPlan(defaultTrainerAlgorithm, 280, 5).map((set) => [
@@ -40,7 +40,7 @@ test('default algorithm keeps the requested percentages, warm-up, and rep ranges
       [140, 140],
       [210, 210],
       [250, 265],
-    ]
+    ],
   );
   assert.deepEqual(algorithmSetPlan(defaultTrainerAlgorithm, 0, 5), []);
   for (const set of [
@@ -54,11 +54,11 @@ test('default algorithm keeps the requested percentages, warm-up, and rep ranges
       validateAlgorithm({
         ...defaultTrainerAlgorithm,
         sets: [{ ...defaultTrainerAlgorithm.sets[0], ...set }],
-      })
+      }),
     );
   }
   assert.throws(() =>
-    validateAlgorithm({ ...defaultTrainerAlgorithm, sets: [] })
+    validateAlgorithm({ ...defaultTrainerAlgorithm, sets: [] }),
   );
 });
 
@@ -74,7 +74,7 @@ test('template prescriptions apply to every exercise and calculate range totals'
         tempo: 'controlled',
       })),
     },
-    { exercises: [{}, {}] }
+    { exercises: [{}, {}] },
   );
   const result = calculateTrainerWorkout(prescription);
   assert.equal(result.exercises[0].setPlan.length, 4);
@@ -87,9 +87,9 @@ test('template prescriptions apply to every exercise and calculate range totals'
 
 test('algorithm library saves custom copies and Trainer Mode retains the chosen snapshot', async () => {
   const db = memoryDb();
-  const server = createApp(db).listen(0, '127.0.0.1');
+  const server = createApp(db).listen(0, '0.0.0.0');
   await new Promise((resolve) => server.once('listening', resolve));
-  const base = `http://127.0.0.1:${server.address().port}/api`;
+  const base = `http://0.0.0.0:${server.address().port}/api`;
   const call = (path, method = 'GET', body) =>
     fetch(`${base}/${path}`, {
       method,
@@ -104,10 +104,10 @@ test('algorithm library saves custom copies and Trainer Mode retains the chosen 
         await call(
           'trainer-algorithms/default-four-set',
           'PUT',
-          defaultTrainerAlgorithm
+          defaultTrainerAlgorithm,
         )
       ).status,
-      400
+      400,
     );
     const response = await call('trainer-algorithms', 'POST', {
       ...defaultTrainerAlgorithm,
@@ -136,12 +136,12 @@ test('algorithm library saves custom copies and Trainer Mode retains the chosen 
           ],
         })
       ).status,
-      200
+      200,
     );
     const changed = { ...custom, name: 'Changed', sets: [custom.sets[0]] };
     assert.equal(
       (await call(`trainer-algorithms/${custom.id}`, 'PUT', changed)).status,
-      200
+      200,
     );
     const saved = await (await call(`trainer-mode/${workoutId}`)).json();
     assert.equal(saved.algorithm.name, 'Custom test');
@@ -174,7 +174,7 @@ test('original Trainer Mode settings coexist with the workout algorithm without 
       algorithm: defaultTrainerAlgorithm,
       exercises: [exercise],
     },
-    { exercises: [{}] }
+    { exercises: [{}] },
   );
   assert.equal(saved.exercises[0].oneRepMax, 280);
   assert.equal(saved.exercises[0].workingWeight, 210);
@@ -197,7 +197,7 @@ test('original Trainer Mode settings coexist with the workout algorithm without 
         },
       ],
     },
-    { exercises: [{}] }
+    { exercises: [{}] },
   );
   assert.equal(calculateTrainerWorkout(manual).totals.volume, 5040);
   assert.equal(manual.exercises[0].sets, 3);
@@ -218,7 +218,7 @@ test('Smith machine bar is added once, supports unloaded sets, and stays out of 
           },
         ],
       },
-      { exercises: [{ equipmentId }] }
+      { exercises: [{ equipmentId }] },
     );
   const smith = make(100, 5);
   const first = calculateTrainerWorkout(smith);
@@ -229,12 +229,12 @@ test('Smith machine bar is added once, supports unloaded sets, and stays out of 
   assert.deepEqual(first, reloaded);
   assert.ok(
     calculateTrainerWorkout(make(0, 5)).exercises[0].setPlan.every(
-      (set) => set.weightMin === 12 && set.weightMax === 12
-    )
+      (set) => set.weightMin === 12 && set.weightMax === 12,
+    ),
   );
   assert.equal(
     calculateTrainerWorkout(make(100, 6)).exercises[0].setPlan[0].weightMin,
-    35
+    35,
   );
   const kg = calculateTrainerWorkout(make(0, 5, 'kg')).exercises[0].setPlan;
   assert.ok(kg.every((set) => Math.abs(set.weightMin - 5.44) < 0.01));

@@ -53,17 +53,17 @@ test('trainer handler validates bounds, occurrences, numeric inputs, and tempo',
     assert.throws(() => trainerPrescription(invalid, workout));
   }
   assert.throws(() =>
-    trainerPrescription({ ...body(), weightUnit: 'stones' }, workout)
+    trainerPrescription({ ...body(), weightUnit: 'stones' }, workout),
   );
   assert.throws(() =>
-    trainerPrescription({ ...body(), exercises: [settings(0)] }, workout)
+    trainerPrescription({ ...body(), exercises: [settings(0)] }, workout),
   );
   const zero = body();
   zero.exercises[0] = { ...settings(0), minWeight: 0, workingWeight: 0 };
   assert.equal(
     calculateTrainerWorkout(trainerPrescription(zero, workout)).exercises[0]
       .volume,
-    0
+    0,
   );
 });
 
@@ -77,9 +77,9 @@ test('Trainer Mode persists separately, detects changed workouts, and cleans up 
   };
   db.records.workouts.push(workout);
   const before = JSON.stringify(workout);
-  const server = createApp(db).listen(0, '127.0.0.1');
+  const server = createApp(db).listen(0, '0.0.0.0');
   await new Promise((resolve) => server.once('listening', resolve));
-  const base = `http://127.0.0.1:${server.address().port}/api`;
+  const base = `http://0.0.0.0:${server.address().port}/api`;
   const request = (path, method = 'GET', data) =>
     fetch(`${base}/${path}`, {
       method,

@@ -22,7 +22,7 @@ test('equipment types replace machine names', () => {
       name: 'Seated Row',
       'equipment-type': 'Multifunctional Cable Machine',
     }).equipmentId,
-    4
+    4,
   );
 });
 
@@ -32,15 +32,15 @@ test('catalog links equipment and all contributing muscle groups; cable attachme
     assert.ok(exercise.muscleGroupIds.includes(exercise.muscleGroupId));
     assert.ok(
       exercise.muscleGroupIds.every((id) =>
-        muscleGroups.some((group) => group.id === id)
-      )
+        muscleGroups.some((group) => group.id === id),
+      ),
     );
     assert.ok(exercise.primaryMuscles.length);
     assert.equal(
       exercise['equipment-type'],
       equipment.find((item) => item.id === exercise.equipmentId)[
         'equipment-type'
-      ]
+      ],
     );
     if (exercise.equipmentId === 4) assert.equal(exercise.attachment, null);
   }
@@ -54,10 +54,10 @@ test('catalog links equipment and all contributing muscle groups; cable attachme
 
 test('workout API validates selections and persists their order and repeated exercises', async () => {
   const db = memoryDb();
-  const server = createApp(db).listen(0, '127.0.0.1');
+  const server = createApp(db).listen(0, '0.0.0.0');
   await new Promise((resolve) => server.once('listening', resolve));
   try {
-    const url = `http://127.0.0.1:${server.address().port}/api/workouts`;
+    const url = `http://0.0.0.0:${server.address().port}/api/workouts`;
     const post = (body) =>
       fetch(url, {
         method: 'POST',
@@ -67,17 +67,17 @@ test('workout API validates selections and persists their order and repeated exe
     assert.equal((await post({ name: '  ', exerciseIds: [] })).status, 400);
     assert.equal(
       (await post({ name: 'Push', exerciseIds: ['missing'] })).status,
-      400
+      400,
     );
     const catalog = await (
       await fetch(url.replace('/workouts', '/catalog'))
     ).json();
     const ids = [
       catalog.exercises.find(
-        (item) => item.muscleGroupId === 1 && item.equipmentId === 5
+        (item) => item.muscleGroupId === 1 && item.equipmentId === 5,
       ),
       catalog.exercises.find(
-        (item) => item.muscleGroupId === 1 && item.equipmentId === 1
+        (item) => item.muscleGroupId === 1 && item.equipmentId === 1,
       ),
     ].map((item) => item.id);
     const response = await post({
@@ -89,11 +89,11 @@ test('workout API validates selections and persists their order and repeated exe
     assert.equal(saved.name, 'Push day');
     assert.equal(
       saved.exercises[0]['equipment-type'],
-      'Selectorized Cable Machine'
+      'Selectorized Cable Machine',
     );
     assert.deepEqual(
       saved.exercises.map((item) => item.id),
-      [ids[1], ids[0], ids[1]]
+      [ids[1], ids[0], ids[1]],
     );
     assert.equal((await (await fetch(url)).json()).length, 1);
     assert.equal(
@@ -103,7 +103,7 @@ test('workout API validates selections and persists their order and repeated exe
           selections: [{ exerciseId: ids[1], attachment: 'Not real' }],
         })
       ).status,
-      400
+      400,
     );
     assert.equal(
       (
@@ -112,7 +112,7 @@ test('workout API validates selections and persists their order and repeated exe
           selections: [{ exerciseId: ids[0], attachment: 'Dual Rope' }],
         })
       ).status,
-      400
+      400,
     );
     const cableId = catalog.exercises.find((item) => item.equipmentId === 4).id;
     const attachmentResponse = await post({
@@ -126,24 +126,24 @@ test('workout API validates selections and persists their order and repeated exe
     const attached = await attachmentResponse.json();
     assert.deepEqual(
       attached.exercises.map((item) => item.attachment),
-      ['Dual Rope', null]
+      ['Dual Rope', null],
     );
     const persisted = await (await fetch(url)).json();
     assert.equal(
       persisted.find((item) => item.id === attached.id).exercises[0].attachment,
-      'Dual Rope'
+      'Dual Rope',
     );
     assert.equal(
       (await fetch(`${url}/invalid`, { method: 'DELETE' })).status,
-      400
+      400,
     );
     assert.equal(
       (await fetch(`${url}/${saved.id}`, { method: 'DELETE' })).status,
-      204
+      204,
     );
     assert.equal(
       (await fetch(`${url}/${saved.id}`, { method: 'DELETE' })).status,
-      404
+      404,
     );
   } finally {
     await new Promise((resolve) => server.close(resolve));
@@ -153,7 +153,7 @@ test('workout API validates selections and persists their order and repeated exe
 test('selectorized isolation is an exercise flag and legacy equipment resolves safely', () => {
   assert.equal(
     equipment.some((item) => item.id === 2),
-    false
+    false,
   );
   for (const reference of [
     { equipmentId: '1' },
@@ -174,7 +174,7 @@ test('selectorized isolation is an exercise flag and legacy equipment resolves s
   assert.equal(
     normalizeExercise({ name: 'Seated Lat Pulldown', equipmentId: '2' })
       .isIsolation,
-    false
+    false,
   );
   assert.equal(
     normalizeExercise({
@@ -182,7 +182,7 @@ test('selectorized isolation is an exercise flag and legacy equipment resolves s
       equipmentId: 1,
       isIsolation: false,
     }).isIsolation,
-    false
+    false,
   );
   const unknown = normalizeExercise({
     name: 'Custom curl',
@@ -193,7 +193,7 @@ test('selectorized isolation is an exercise flag and legacy equipment resolves s
   assert.equal(unknown.equipmentId, null);
   for (const records of Object.values(exerciseCollections)) {
     const identities = records.map(
-      (record) => `${record.name}:${record.equipmentId}`
+      (record) => `${record.name}:${record.equipmentId}`,
     );
     assert.equal(new Set(identities).size, identities.length);
   }
@@ -215,7 +215,7 @@ test('exercise grouping combines equipment qualifiers and preserves distinct mov
   assert.equal(groups[0].name, 'Preacher Curl');
   assert.deepEqual(
     groups[0].variants.map((item) => item.id),
-    ['1', '2', '3']
+    ['1', '2', '3'],
   );
 });
 
@@ -233,7 +233,7 @@ test('multifunctional cable rename resolves current and legacy names to the same
   assert.ok(
     muscleGroups
       .find((group) => group.name === 'Back')
-      .muscles.includes('Spine')
+      .muscles.includes('Spine'),
   );
 });
 
@@ -244,6 +244,6 @@ test('equipment qualifier matching preserves pin inside ordinary words', () => {
   assert.equal(exerciseFamilyName('Spinning'), 'Spinning');
   assert.equal(
     exerciseFamilyName('Incline Chest Press'),
-    'Incline Chest Press'
+    'Incline Chest Press',
   );
 });

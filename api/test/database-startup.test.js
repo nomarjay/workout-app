@@ -36,12 +36,12 @@ test('database startup retries temporary failures with capped backoff and recove
       wait: async (delay) => {
         delays.push(delay);
       },
-    }
+    },
   );
   assert.equal(calls, 9);
   assert.deepEqual(
     delays,
-    [1000, 2000, 4000, 8000, 16000, 30000, 30000, 30000]
+    [1000, 2000, 4000, 8000, 16000, 30000, 30000, 30000],
   );
 });
 
@@ -54,7 +54,7 @@ test('database startup stops on permanent errors or shutdown', async () => {
     initializeWithRetry(async () => {
       throw error;
     }),
-    (result) => result === error
+    (result) => result === error,
   );
   const shutdown = new AbortController();
   let calls = 0;
@@ -68,7 +68,7 @@ test('database startup stops on permanent errors or shutdown', async () => {
       wait: async () => {
         shutdown.abort();
       },
-    }
+    },
   );
   assert.equal(calls, 1);
 });
@@ -81,9 +81,9 @@ test('API stays reachable during startup and reports database outages without re
     if (disconnected) throw networkError();
     return { ok: 1 };
   };
-  const server = createApp(db, { isReady: () => ready }).listen(0, '127.0.0.1');
+  const server = createApp(db, { isReady: () => ready }).listen(0, '0.0.0.0');
   await new Promise((resolve) => server.once('listening', resolve));
-  const url = `http://127.0.0.1:${server.address().port}/api/health`;
+  const url = `http://0.0.0.0:${server.address().port}/api/health`;
   try {
     const starting = await fetch(url);
     assert.equal(starting.status, 503);

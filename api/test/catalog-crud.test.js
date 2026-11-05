@@ -6,9 +6,9 @@ import { memoryDb } from './helpers/memory-db.js';
 
 test('catalog CRUD persists changes, validates references, and protects saved workouts', async () => {
   const db = memoryDb();
-  const server = createApp(db).listen(0, '127.0.0.1');
+  const server = createApp(db).listen(0, '0.0.0.0');
   await new Promise((resolve) => server.once('listening', resolve));
-  const base = `http://127.0.0.1:${server.address().port}/api`;
+  const base = `http://0.0.0.0:${server.address().port}/api`;
   const request = (path, method = 'GET', body) =>
     fetch(`${base}/${path}`, {
       method,
@@ -32,7 +32,7 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
           attachmentIds: [999],
         })
       ).status,
-      400
+      400,
     );
     assert.equal(
       (
@@ -41,7 +41,7 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
           'equipment-type': '',
         })
       ).status,
-      400
+      400,
     );
     assert.equal(
       (
@@ -50,18 +50,18 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
           image: 'javascript:alert(1)',
         })
       ).status,
-      400
+      400,
     );
     const createEquipment = await request('equipment', 'POST', equipmentBody);
     assert.equal(createEquipment.status, 201);
     const machine = await createEquipment.json();
     assert.equal(
       machine['equipment-type'],
-      'Custom Multifunctional Cable Machine'
+      'Custom Multifunctional Cable Machine',
     );
     assert.equal(
       (await (await request(`equipment/${machine.id}`)).json()).id,
-      machine.id
+      machine.id,
     );
     const exerciseBody = {
       name: 'Custom pull',
@@ -81,10 +81,12 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
       (
         await request('exercises', 'POST', {
           ...exerciseBody,
-          equipmentOptions: [{ ...exerciseBody.equipmentOptions[0], primaryMuscles: [] }],
+          equipmentOptions: [
+            { ...exerciseBody.equipmentOptions[0], primaryMuscles: [] },
+          ],
         })
       ).status,
-      400
+      400,
     );
     assert.equal(
       (
@@ -95,7 +97,7 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
           ],
         })
       ).status,
-      400
+      400,
     );
     assert.equal(
       (
@@ -106,7 +108,7 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
           ],
         })
       ).status,
-      400
+      400,
     );
     assert.equal(
       (
@@ -118,18 +120,18 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
           ],
         })
       ).status,
-      400
+      400,
     );
     const createExercise = await request('exercises', 'POST', exerciseBody);
     assert.equal(createExercise.status, 201);
     const exercise = await createExercise.json();
     assert.equal(
       (await (await request(`exercises/${exercise.id}`)).json()).name,
-      'Custom pull'
+      'Custom pull',
     );
     const catalog = await (await request('catalog')).json();
     const variant = catalog.exercises.find(
-      (item) => item.exerciseId === exercise.id
+      (item) => item.exerciseId === exercise.id,
     );
     assert.equal(variant.equipment, 'Custom Multifunctional Cable Machine');
     assert.equal(variant.attachment, 'Dual Rope');
@@ -137,7 +139,7 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
     assert.deepEqual(variant.attachmentIds, [12]);
     assert.equal(
       (await request(`equipment/${machine.id}`, 'DELETE')).status,
-      409
+      409,
     );
     assert.equal(
       (
@@ -146,7 +148,7 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
           attachmentIds: [],
         })
       ).status,
-      409
+      409,
     );
     assert.equal(
       (
@@ -155,7 +157,7 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
           'equipment-type': 'Renamed Multifunctional Cable Machine',
         })
       ).status,
-      200
+      200,
     );
     assert.equal(
       (
@@ -164,7 +166,7 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
           name: 'Renamed pull',
         })
       ).status,
-      200
+      200,
     );
     const workoutResponse = await request('workouts', 'POST', {
       name: 'Custom workout',
@@ -180,12 +182,12 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
     const workout = await workoutResponse.json();
     assert.equal(
       workout.exercises[0].equipment,
-      'Renamed Multifunctional Cable Machine'
+      'Renamed Multifunctional Cable Machine',
     );
     assert.equal(workout.exercises[0].name, 'Renamed pull');
     assert.equal(
       (await request(`exercises/${exercise.id}`, 'DELETE')).status,
-      409
+      409,
     );
     assert.equal(
       (
@@ -196,7 +198,7 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
           ],
         })
       ).status,
-      409
+      409,
     );
     assert.equal(
       (
@@ -207,7 +209,7 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
           ],
         })
       ).status,
-      200
+      200,
     );
     assert.equal(
       (
@@ -216,30 +218,30 @@ test('catalog CRUD persists changes, validates references, and protects saved wo
           attachmentIds: [],
         })
       ).status,
-      409
+      409,
     );
     assert.equal(
       (await request(`workouts/${workout.id}`, 'DELETE')).status,
-      204
+      204,
     );
     assert.equal(
       (await request(`exercises/${exercise.id}`, 'DELETE')).status,
-      204
+      204,
     );
     assert.equal(
       (await request(`equipment/${machine.id}`, 'DELETE')).status,
-      204
+      204,
     );
     assert.equal((await request(`equipment/${machine.id}`)).status, 404);
     assert.equal(
       (await request(`exercises/${exercise.id}`, 'PUT', exerciseBody)).status,
-      404
+      404,
     );
     assert.equal((await request('exercises/missing', 'DELETE')).status, 404);
     assert.ok(
       !(await (await request('catalog')).json()).exercises.some(
-        (item) => item.exerciseId === exercise.id
-      )
+        (item) => item.exerciseId === exercise.id,
+      ),
     );
   } finally {
     await new Promise((resolve) => server.close(resolve));
@@ -256,7 +258,7 @@ test('initialization seeds stable catalog IDs once and does not resurrect deleti
     db.records.catalog_equipment.find((item) => item._id === '5')[
       'equipment-type'
     ],
-    'Smith Machine'
+    'Smith Machine',
   );
   const exerciseId = db.records.catalog_exercises[0]._id;
   await db.collection('catalog_exercises').deleteOne({ _id: exerciseId });
@@ -264,20 +266,20 @@ test('initialization seeds stable catalog IDs once and does not resurrect deleti
     .collection('catalog_equipment')
     .updateOne(
       { _id: '5' },
-      { $set: { 'equipment-type': 'Edited Smith Machine' } }
+      { $set: { 'equipment-type': 'Edited Smith Machine' } },
     );
   const count = db.records.catalog_exercises.length;
   await initializeDatabase(db);
   assert.equal(db.records.catalog_exercises.length, count);
   assert.equal(
     await db.collection('catalog_exercises').findOne({ _id: exerciseId }),
-    null
+    null,
   );
   assert.equal(
     db.records.catalog_equipment.find((item) => item._id === '5')[
       'equipment-type'
     ],
-    'Edited Smith Machine'
+    'Edited Smith Machine',
   );
   assert.equal(db.records.legacy_equipment[0].name, 'Legacy record');
   assert.equal(db.records.workouts.length, 2);
@@ -288,14 +290,14 @@ test('initialization seeds stable catalog IDs once and does not resurrect deleti
 
 test('seeded numeric equipment references are protected when removing supported attachments', async () => {
   const db = memoryDb();
-  const server = createApp(db).listen(0, '127.0.0.1');
+  const server = createApp(db).listen(0, '0.0.0.0');
   await new Promise((resolve) => server.once('listening', resolve));
   try {
     db.records.catalog_exercises[0].equipmentOptions = [
       { key: '1', equipmentId: 4, attachmentId: 12 },
     ];
     const response = await fetch(
-      `http://127.0.0.1:${server.address().port}/api/equipment/4`,
+      `http://0.0.0.0:${server.address().port}/api/equipment/4`,
       {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -304,7 +306,7 @@ test('seeded numeric equipment references are protected when removing supported 
           category: 'Machines',
           attachmentIds: [],
         }),
-      }
+      },
     );
     assert.equal(response.status, 409);
   } finally {

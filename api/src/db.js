@@ -12,7 +12,7 @@ export const client = new MongoClient(
   process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017',
   {
     serverSelectionTimeoutMS: 15000,
-  }
+  },
 );
 export const db = client.db(process.env.MONGODB_DB || 'workout_app');
 
@@ -20,7 +20,7 @@ export function starterWorkouts() {
   const catalog = expandExerciseDocuments(catalogDocuments);
   const select = (name, equipmentId) => {
     const exercise = catalog.find(
-      (item) => item.name === name && item.equipmentId === equipmentId
+      (item) => item.name === name && item.equipmentId === equipmentId,
     );
     if (!exercise) throw new Error('Missing starter exercise: ' + name);
     const {
@@ -60,7 +60,7 @@ export async function initializeDatabase(database = db) {
     {
       unique: true,
       partialFilterExpression: { templateKey: { $type: 'string' } },
-    }
+    },
   );
   // Separate managed collections leave legacy catalog collections untouched.
   // The marker prevents deleted catalog entries being reseeded on restart.
@@ -77,7 +77,7 @@ export async function initializeDatabase(database = db) {
             update: { $setOnInsert: record },
             upsert: true,
           },
-        }))
+        })),
       );
     }
     await workouts.bulkWrite(
@@ -89,12 +89,12 @@ export async function initializeDatabase(database = db) {
           },
           upsert: true,
         },
-      }))
+      })),
     );
     await state.updateOne(
       { _id: 'managed-catalog-v1' },
       { $set: { initializedAt: new Date().toISOString() } },
-      { upsert: true }
+      { upsert: true },
     );
   }
 }

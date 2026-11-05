@@ -15,13 +15,13 @@ test('editing preserves identity and metadata while validating and replacing sel
   };
   const db = memoryDb();
   db.records.workouts.push(record);
-  const server = createApp(db).listen(0, '127.0.0.1');
+  const server = createApp(db).listen(0, '0.0.0.0');
   await new Promise((resolve) => server.once('listening', resolve));
   try {
-    const base = `http://127.0.0.1:${server.address().port}`;
+    const base = `http://0.0.0.0:${server.address().port}`;
     const catalog = await (await fetch(`${base}/api/catalog`)).json();
     const bench = catalog.exerciseDefinitions.find(
-      (item) => item.name === 'Seated Chest Press'
+      (item) => item.name === 'Seated Chest Press',
     );
     const selections = ['1', '3', '1'].map((equipmentOptionKey) => ({
       exerciseId: bench.id,
@@ -36,12 +36,12 @@ test('editing preserves identity and metadata while validating and replacing sel
       });
     assert.equal(
       (await put('invalid', { name: 'Edited', selections })).status,
-      400
+      400,
     );
     assert.equal((await put(id, { name: ' ', selections })).status, 400);
     assert.equal(
       (await put(id, { name: 'Edited', selections: [] })).status,
-      400
+      400,
     );
     assert.equal(
       (
@@ -50,7 +50,7 @@ test('editing preserves identity and metadata while validating and replacing sel
           selections: [{ exerciseId: bench.id, equipmentOptionKey: 'missing' }],
         })
       ).status,
-      400
+      400,
     );
     assert.equal(
       (
@@ -65,12 +65,12 @@ test('editing preserves identity and metadata while validating and replacing sel
           ],
         })
       ).status,
-      400
+      400,
     );
     assert.equal(record.name, 'Original');
     assert.equal(
       (await put(new ObjectId(), { name: 'Edited', selections })).status,
-      404
+      404,
     );
     const response = await put(id, { name: ' Edited ', selections });
     assert.equal(response.status, 200);
@@ -82,15 +82,15 @@ test('editing preserves identity and metadata while validating and replacing sel
     assert.ok(edited.updatedAt);
     assert.deepEqual(
       edited.exercises.map((item) => item.equipmentOptionKey),
-      ['1', '3', '1']
+      ['1', '3', '1'],
     );
     assert.deepEqual(
       edited.exercises.map((item) => item.attachment),
-      [null, null, null]
+      [null, null, null],
     );
     assert.deepEqual(
       db.records.workouts[0].exercises.map((item) => item.equipmentId),
-      [1, 3, 1]
+      [1, 3, 1],
     );
   } finally {
     await new Promise((resolve) => server.close(resolve));

@@ -8,45 +8,45 @@ try {
   const before = await db.collection('exercises').countDocuments();
   await initializeDatabase();
   assert.equal(await db.collection('exercises').countDocuments(), before);
-  server = createApp(db).listen(0, '127.0.0.1');
+  server = createApp(db).listen(0, '0.0.0.0');
   await new Promise((resolve) => server.once('listening', resolve));
   const response = await fetch(
-    `http://127.0.0.1:${server.address().port}/api/catalog`
+    `http://0.0.0.0:${server.address().port}/api/catalog`,
   );
   assert.equal(response.status, 200);
   const catalog = await response.json();
   const benches = catalog.exerciseDefinitions.filter(
-    (item) => item.name === 'Bench Press'
+    (item) => item.name === 'Bench Press',
   );
   assert.equal(benches.length, 1);
   assert.deepEqual(
     benches[0].equipmentOptions.map((option) => option.equipmentId),
-    [5]
+    [5],
   );
   assert.ok(
     benches[0].equipmentOptions.every(
-      (option) => !Object.hasOwn(option, 'equipment')
-    )
+      (option) => !Object.hasOwn(option, 'equipment'),
+    ),
   );
   const collections = (
     await db.listCollections({}, { nameOnly: true }).toArray()
   ).map((item) => item.name);
   assert.ok(
     !['equipment', 'attachments', 'muscle_groups'].some((name) =>
-      collections.includes(name)
-    )
+      collections.includes(name),
+    ),
   );
   assert.ok(
     !catalog.exercises.some((item) =>
-      ['Bodyweight', 'Unknown equipment'].includes(item.equipment)
-    )
+      ['Bodyweight', 'Unknown equipment'].includes(item.equipment),
+    ),
   );
   assert.ok(catalog.equipment.every((item) => !item.exercises));
   console.log(
-    `Verified ${catalog.exerciseDefinitions.length} movements, ${catalog.exercises.length} equipment options, ${catalog.equipment.length} equipment categories.`
+    `Verified ${catalog.exerciseDefinitions.length} movements, ${catalog.exercises.length} equipment options, ${catalog.equipment.length} equipment categories.`,
   );
   console.log(
-    'Bench Press options verified; repeated startup adds no duplicate documents.'
+    'Bench Press options verified; repeated startup adds no duplicate documents.',
   );
 } catch (error) {
   console.error(formatDatabaseError(error));

@@ -16,9 +16,9 @@ import {
 
 async function withApi(run) {
   const db = memoryDb();
-  const server = createApp(db).listen(0, '127.0.0.1');
+  const server = createApp(db).listen(0, '0.0.0.0');
   await new Promise((resolve) => server.once('listening', resolve));
-  const base = `http://127.0.0.1:${server.address().port}/api`;
+  const base = `http://0.0.0.0:${server.address().port}/api`;
   const request = (path, method = 'GET', body) =>
     fetch(`${base}/${path}`, {
       method,
@@ -73,7 +73,7 @@ test('profile CRUD validates client information and preserves unrelated workouts
         (await request('profile', 'POST', { ...profileBody, ...invalid }))
           .status,
         400,
-        JSON.stringify(invalid)
+        JSON.stringify(invalid),
       );
     }
     const response = await request('profile', 'POST', {
@@ -126,19 +126,19 @@ test('calendar schedule persists one saved workout per date, supports duration e
     const anotherId = new ObjectId();
     db.records.workouts.push(
       { _id: id, name: 'Push day', exercises: [] },
-      { _id: anotherId, name: 'Pull day', exercises: [] }
+      { _id: anotherId, name: 'Pull day', exercises: [] },
     );
     const body = { workoutId: String(id), durationMinutes: null };
     assert.deepEqual(await (await request('schedule')).json(), []);
     assert.equal(
       (await request('schedule/2026-02-30', 'PUT', body)).status,
-      400
+      400,
     );
     assert.equal((await request('schedule/not-a-date', 'DELETE')).status, 400);
     assert.equal(
       (await request('schedule/2026-10-14', 'PUT', { workoutId: 'missing' }))
         .status,
-      400
+      400,
     );
     assert.equal(
       (
@@ -146,7 +146,7 @@ test('calendar schedule persists one saved workout per date, supports duration e
           workoutId: String(new ObjectId()),
         })
       ).status,
-      404
+      404,
     );
     for (const durationMinutes of [0, 301, 30.5, '30'])
       assert.equal(
@@ -156,7 +156,7 @@ test('calendar schedule persists one saved workout per date, supports duration e
             durationMinutes,
           })
         ).status,
-        400
+        400,
       );
     const response = await request('schedule/2026-10-14', 'PUT', body);
     assert.equal(response.status, 200);
@@ -174,7 +174,7 @@ test('calendar schedule persists one saved workout per date, supports duration e
           intensity: 'Moderate',
         })
       ).status,
-      200
+      200,
     );
     const list = await (await request('schedule')).json();
     assert.equal(list.length, 1);
@@ -187,7 +187,7 @@ test('calendar schedule persists one saved workout per date, supports duration e
           intensity: 'Extreme',
         })
       ).status,
-      400
+      400,
     );
     assert.equal(list[0].workoutId, String(anotherId));
     assert.equal(list[0].createdAt, createdAt);
@@ -197,11 +197,11 @@ test('calendar schedule persists one saved workout per date, supports duration e
     await request('schedule/2026-10-16', 'PUT', body);
     assert.equal(
       (await request(`workouts/${anotherId}`, 'DELETE')).status,
-      204
+      204,
     );
     assert.deepEqual(
       (await (await request('schedule')).json()).map((item) => item.date),
-      ['2026-10-16']
+      ['2026-10-16'],
     );
     assert.equal((await request('schedule/2026-10-16', 'DELETE')).status, 204);
     assert.equal((await request('schedule/2026-10-16', 'DELETE')).status, 404);
@@ -220,7 +220,7 @@ test('agenda primary muscles combine the saved selections without including seco
         { secondaryMuscles: ['Forearms'] },
       ],
     }),
-    ['Pectoralis Major', 'Anterior Deltoids', 'Biceps']
+    ['Pectoralis Major', 'Anterior Deltoids', 'Biceps'],
   );
   assert.deepEqual(primaryMusclesFor(null), []);
 });
@@ -259,11 +259,11 @@ test('repeating schedules clamp monthly dates and reject conflicts before writin
     };
     assert.equal(
       (await request('schedule/2027-01-31', 'PUT', body)).status,
-      200
+      200,
     );
     assert.deepEqual(
       (await (await request('schedule')).json()).map((item) => item.date),
-      ['2027-01-31', '2027-02-28', '2027-03-31']
+      ['2027-01-31', '2027-02-28', '2027-03-31'],
     );
     assert.equal(
       (
@@ -272,7 +272,7 @@ test('repeating schedules clamp monthly dates and reject conflicts before writin
           frequency: 'daily',
         })
       ).status,
-      409
+      409,
     );
     assert.equal(db.records.workout_schedule.length, 3);
     assert.equal(
@@ -282,7 +282,7 @@ test('repeating schedules clamp monthly dates and reject conflicts before writin
           until: '2029-01-01',
         })
       ).status,
-      400
+      400,
     );
     for (const [frequency, count] of [
       ['daily', 29],
@@ -298,7 +298,7 @@ test('repeating schedules clamp monthly dates and reject conflicts before writin
             until: '2027-01-29',
           })
         ).status,
-        200
+        200,
       );
       assert.equal(db.records.workout_schedule.length, count);
     }
@@ -335,7 +335,7 @@ test('completed sessions snapshot actual equipment and survive routine deletion'
           ],
         })
       ).status,
-      400
+      400,
     );
     assert.equal(
       (
@@ -344,7 +344,7 @@ test('completed sessions snapshot actual equipment and survive routine deletion'
           completedDate: '2026-02-30',
         })
       ).status,
-      400
+      400,
     );
     const response = await request('workout-logs', 'POST', {
       ...body,
@@ -355,7 +355,7 @@ test('completed sessions snapshot actual equipment and survive routine deletion'
     assert.equal(log.completedAt, '2026-10-14');
     assert.equal(
       log.exercises[0].equipmentOptionKey,
-      exercise.equipmentOptionKey
+      exercise.equipmentOptionKey,
     );
     assert.equal(log.exercises[0].attachment, null);
     assert.equal(db.records.workouts[0].exercises.length, 0);
@@ -371,36 +371,32 @@ test('deleting a workout log preserves other history, routines, schedules, and p
     const first = new ObjectId();
     const second = new ObjectId();
 
-    await db
-      .collection('workout_logs')
-      .insertOne({
-        _id: first,
-        name: 'Delete this',
-        completedAt: '2026-10-14T16:00:00Z',
-      });
-    await db
-      .collection('workout_logs')
-      .insertOne({
-        _id: second,
-        name: 'Keep this',
-        completedAt: '2026-10-16T16:00:00Z',
-      });
+    await db.collection('workout_logs').insertOne({
+      _id: first,
+      name: 'Delete this',
+      completedAt: '2026-10-14T16:00:00Z',
+    });
+    await db.collection('workout_logs').insertOne({
+      _id: second,
+      name: 'Keep this',
+      completedAt: '2026-10-16T16:00:00Z',
+    });
     db.records.workouts.push({ _id: new ObjectId(), name: 'Routine' });
     db.records.workout_schedule.push({ _id: '2026-10-14' });
     db.records.profiles.push({ _id: 'primary', name: 'Saved profile' });
     assert.equal((await request('workout-logs/invalid', 'DELETE')).status, 400);
     assert.equal(
       (await request(`workout-logs/${first}`, 'DELETE')).status,
-      204
+      204,
     );
     assert.equal(
       (await request(`workout-logs/${first}`, 'DELETE')).status,
-      404
+      404,
     );
     const logs = await (await request('workout-logs')).json();
     assert.deepEqual(
       logs.map((item) => item.id),
-      [String(second)]
+      [String(second)],
     );
     assert.equal(db.records.workouts.length, 1);
     assert.equal(db.records.workout_schedule.length, 1);
@@ -419,7 +415,7 @@ test('frequency edits replace following series dates and preserve earlier dates 
     };
     assert.equal(
       (await request('schedule/2026-11-02', 'PUT', body)).status,
-      200
+      200,
     );
     const first = await (await request('schedule')).json();
     assert.equal(new Set(first.map((item) => item.seriesId)).size, 1);
@@ -431,7 +427,7 @@ test('frequency edits replace following series dates and preserve earlier dates 
           scope: 'future',
         })
       ).status,
-      200
+      200,
     );
     let dates = await (await request('schedule')).json();
     assert.deepEqual(dates.map((item) => item.date).sort(), [
@@ -441,7 +437,7 @@ test('frequency edits replace following series dates and preserve earlier dates 
     ]);
     assert.equal(
       dates.find((item) => item.date === '2026-11-09').frequency,
-      'biweekly'
+      'biweekly',
     );
     await request('schedule/2026-11-16', 'PUT', { workoutId: String(id) });
     assert.equal(
@@ -451,22 +447,22 @@ test('frequency edits replace following series dates and preserve earlier dates 
           scope: 'future',
         })
       ).status,
-      409
+      409,
     );
     dates = await (await request('schedule')).json();
     assert.equal(
       dates.find((item) => item.date === '2026-11-09').frequency,
-      'biweekly'
+      'biweekly',
     );
     assert.equal(
       (await request('schedule/2026-11-09?scope=future', 'DELETE')).status,
-      204
+      204,
     );
     assert.deepEqual(
       (await (await request('schedule')).json())
         .map((item) => item.date)
         .sort(),
-      ['2026-11-02', '2026-11-16']
+      ['2026-11-02', '2026-11-16'],
     );
     await request('schedule/2026-11-02', 'PUT', {
       ...body,
@@ -475,18 +471,18 @@ test('frequency edits replace following series dates and preserve earlier dates 
     });
     assert.equal(
       (await (await request('schedule')).json()).find(
-        (item) => item.date === '2026-11-02'
+        (item) => item.date === '2026-11-02',
       ).seriesId,
-      null
+      null,
     );
   });
 });
 
 test('multiple profiles keep calendars and logs separate while preserving legacy primary records', async () => {
   const db = memoryDb();
-  const server = createApp(db).listen(0, '127.0.0.1');
+  const server = createApp(db).listen(0, '0.0.0.0');
   await new Promise((resolve) => server.once('listening', resolve));
-  const base = `http://127.0.0.1:${server.address().port}/api`;
+  const base = `http://0.0.0.0:${server.address().port}/api`;
   const call = (path, profile = 'primary', method = 'GET', body) =>
     fetch(`${base}/${path}`, {
       method,
@@ -504,7 +500,7 @@ test('multiple profiles keep calendars and logs separate while preserving legacy
     assert.equal((await (await call('profiles')).json()).length, 2);
     assert.equal(
       (await (await call('profile', second.id)).json()).name,
-      'Second user'
+      'Second user',
     );
     const id = new ObjectId();
     db.records.workouts.push({
@@ -543,11 +539,11 @@ test('multiple profiles keep calendars and logs separate while preserving legacy
     assert.equal((await (await call('workout-logs')).json()).length, 0);
     assert.equal(
       (await (await call('workout-logs', second.id)).json()).length,
-      1
+      1,
     );
     assert.equal(
       (await call(`workout-logs/${log.id}`, 'primary', 'DELETE')).status,
-      404
+      404,
     );
     await call('profile', second.id, 'PUT', {
       ...profileBody,
@@ -577,7 +573,7 @@ test('profile repeat rule generates dates without expanding storage, survives ed
     };
     assert.equal(
       (await request('profile/repeat-schedule', 'PUT', rule)).status,
-      404
+      404,
     );
     await request('profile', 'POST', profileBody);
     for (const invalid of [
@@ -595,7 +591,7 @@ test('profile repeat rule generates dates without expanding storage, survives ed
             ...invalid,
           })
         ).status,
-        400
+        400,
       );
     }
     const saved = await request('profile/repeat-schedule', 'PUT', rule);
@@ -604,7 +600,7 @@ test('profile repeat rule generates dates without expanding storage, survives ed
     assert.equal(db.records.workout_schedule.length, 0);
     const dates = async (from, to) =>
       (await (await request(`schedule?from=${from}&to=${to}`)).json()).map(
-        (item) => item.date
+        (item) => item.date,
       );
     assert.deepEqual(await dates('2028-01-01', '2028-04-30'), [
       '2028-01-31',
@@ -615,7 +611,7 @@ test('profile repeat rule generates dates without expanding storage, survives ed
     await request('profile', 'PUT', { ...profileBody, name: 'Updated name' });
     assert.equal(
       (await (await request('profile')).json()).repeatingSchedule.frequency,
-      'monthly'
+      'monthly',
     );
     assert.deepEqual(await dates('2030-01-01', '2030-02-28'), [
       '2030-01-31',
@@ -643,27 +639,27 @@ test('profile repeat rule generates dates without expanding storage, survives ed
     ).json();
     assert.equal(
       sessions.filter((item) => item.date === '2028-01-15').length,
-      1
+      1,
     );
     assert.equal(
       sessions.find((item) => item.date === '2028-01-15').durationMinutes,
-      45
+      45,
     );
     assert.equal(
       (await request('schedule?from=2028-01-01&to=2040-01-01')).status,
-      400
+      400,
     );
     await request('profile/repeat-schedule', 'DELETE');
     assert.equal(
       (await (await request('profile')).json()).repeatingSchedule,
-      null
+      null,
     );
     assert.deepEqual(await dates('2028-01-01', '2028-01-29'), ['2028-01-15']);
     await request('profile/repeat-schedule', 'PUT', rule);
     await request(`workouts/${id}`, 'DELETE');
     assert.equal(
       (await (await request('profile')).json()).repeatingSchedule,
-      null
+      null,
     );
   });
 });
@@ -678,14 +674,14 @@ test('repeat schedules belong only to the selected profile', async () => {
       workoutId: String(id),
       frequency: 'daily',
     });
-    const server = createApp(db).listen(0, '127.0.0.1');
+    const server = createApp(db).listen(0, '0.0.0.0');
     await new Promise((resolve) => server.once('listening', resolve));
     try {
       const response = await fetch(
-        `http://127.0.0.1:${
+        `http://0.0.0.0:${
           server.address().port
         }/api/schedule?from=2028-01-01&to=2028-01-03`,
-        { headers: { 'X-Profile-Id': 'other-person' } }
+        { headers: { 'X-Profile-Id': 'other-person' } },
       );
       assert.deepEqual(await response.json(), []);
     } finally {

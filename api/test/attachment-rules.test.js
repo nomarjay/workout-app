@@ -13,14 +13,14 @@ test('only Multifunctional Cable Machines offer attachments across catalog, work
   db.records.catalog_equipment.find((item) => item._id === '1').attachmentIds =
     [12];
   const fixedDefinition = db.records.catalog_exercises.find((item) =>
-    item.equipmentOptions.some((option) => Number(option.equipmentId) === 1)
+    item.equipmentOptions.some((option) => Number(option.equipmentId) === 1),
   );
   fixedDefinition.equipmentOptions.find(
-    (option) => Number(option.equipmentId) === 1
+    (option) => Number(option.equipmentId) === 1,
   ).attachmentId = 12;
-  const server = createApp(db).listen(0, '127.0.0.1');
+  const server = createApp(db).listen(0, '0.0.0.0');
   await new Promise((resolve) => server.once('listening', resolve));
-  const base = `http://127.0.0.1:${server.address().port}/api`;
+  const base = `http://0.0.0.0:${server.address().port}/api`;
   const request = (path, method = 'GET', body) =>
     fetch(`${base}/${path}`, {
       method,
@@ -43,10 +43,10 @@ test('only Multifunctional Cable Machines offer attachments across catalog, work
     const fixedExercise = catalog.exercises.find(
       (item) =>
         item.exerciseId === fixedDefinition._id &&
-        Number(item.equipmentId) === 1
+        Number(item.equipmentId) === 1,
     );
     const multiExercise = catalog.exercises.find(
-      (item) => Number(item.equipmentId) === 4
+      (item) => Number(item.equipmentId) === 4,
     );
     assert.equal(fixedExercise.attachmentId, null);
     assert.equal(fixedExercise.attachment, null);
@@ -66,7 +66,7 @@ test('only Multifunctional Cable Machines offer attachments across catalog, work
           selections: [choice(fixedExercise)],
         })
       ).status,
-      400
+      400,
     );
     const savedResponse = await request('workouts', 'POST', {
       name: 'Cable workout',
@@ -82,7 +82,7 @@ test('only Multifunctional Cable Machines offer attachments across catalog, work
     };
     assert.equal(
       (await request('workout-logs', 'POST', completion)).status,
-      400
+      400,
     );
     assert.equal(
       (
@@ -91,7 +91,7 @@ test('only Multifunctional Cable Machines offer attachments across catalog, work
           selections: [choice(multiExercise)],
         })
       ).status,
-      201
+      201,
     );
     const equipment = {
       'equipment-type': 'Selectorized Cable Machine',
@@ -106,7 +106,7 @@ test('only Multifunctional Cable Machines offer attachments across catalog, work
           'equipment-type': 'Multifunctional Cable Machine',
         })
       ).status,
-      201
+      201,
     );
     const definition = {
       name: 'Unsupported attachment',
@@ -124,7 +124,7 @@ test('only Multifunctional Cable Machines offer attachments across catalog, work
     };
     assert.equal((await request('exercises', 'POST', definition)).status, 400);
     const raw = db.records.workouts.find(
-      (item) => String(item._id) === saved.id
+      (item) => String(item._id) === saved.id,
     );
     raw.exercises[0] = {
       ...raw.exercises[0],
@@ -132,14 +132,14 @@ test('only Multifunctional Cable Machines offer attachments across catalog, work
       attachmentId: 12,
     };
     const historical = (await (await request('workouts')).json()).find(
-      (item) => item.id === saved.id
+      (item) => item.id === saved.id,
     );
     assert.equal(historical.exercises[0].attachment, null);
     assert.equal(historical.exercises[0].attachmentId, null);
     assert.equal(
       raw.exercises[0].attachmentId,
       12,
-      'Reading old workouts does not rewrite their stored history'
+      'Reading old workouts does not rewrite their stored history',
     );
   } finally {
     await new Promise((resolve) => server.close(resolve));

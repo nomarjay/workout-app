@@ -8,14 +8,14 @@ const shutdown = new AbortController();
 const app = createApp(db, { isReady: () => ready });
 const server = app.listen(
   Number(process.env.PORT || 3001),
-  process.env.HOST || '127.0.0.1',
+  process.env.HOST || '0.0.0.0',
   () => {
     console.log(
-      `Workout API listening on http://${process.env.HOST || '127.0.0.1'}:${
+      `Workout API listening on http://${process.env.HOST || '0.0.0.0'}:${
         process.env.PORT || 3001
-      }`
+      }`,
     );
-  }
+  },
 );
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.on(signal, () => {
@@ -30,7 +30,7 @@ try {
     onRetry: (error, delay) => {
       console.error(
         `MongoDB unavailable; retrying startup in ${delay / 1000}s.`,
-        formatDatabaseError(error)
+        formatDatabaseError(error),
       );
     },
   });
@@ -40,7 +40,7 @@ try {
   }
 } catch (error) {
   console.error(
-    'Could not initialize MongoDB. Check MONGODB_URI / MONGODB_DB in api/.env and run npm run db:check.'
+    'Could not initialize MongoDB. Check MONGODB_URI / MONGODB_DB in api/.env and run npm run db:check.',
   );
   console.error(formatDatabaseError(error));
   server.close();
