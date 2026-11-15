@@ -151,7 +151,7 @@ async function mutate(method, target, body) {
     );
   } catch (cause) {
     error.value = committed
-      ? `The change was saved, but the catalog could not refresh. Use Refresh data to reload it. ${cause.message}`
+      ? `The change was saved, but the catalog could not refresh. Refresh the browser to reload it. ${cause.message}`
       : cause.message;
   } finally {
     busy.value = false;

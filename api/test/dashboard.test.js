@@ -689,3 +689,35 @@ test('repeat schedules belong only to the selected profile', async () => {
     }
   });
 });
+
+
+test('split profile names are validated, saved, updated and returned alongside legacy names', async () => {
+  await withApi(async (request, db) => {
+    const body = { ...profileBody, firstName: '  Ada ', lastName: ' Lovelace  ' };
+    for (const invalid of [{ firstName: ' ' }, { lastName: '' }, { firstName: 42 }, { lastName: 'x'.repeat(101) }]) {
+      assert.equal((await request('profile', 'POST', { ...body, ...invalid })).status, 400);
+    }
+    const response = await request('profile', 'POST', body);
+    assert.equal(response.status, 201);
+    const created = await response.json();
+    assert.equal(created.firstName, 'Ada');
+    assert.equal(created.lastName, 'Lovelace');
+    assert.equal(created.name, 'Ada Lovelace');
+    const updated = await request('profile', 'PUT', { ...body, firstName: 'Grace', lastName: 'Hopper' });
+    assert.equal(updated.status, 200);
+    assert.equal((await updated.json()).name, 'Grace Hopper');
+    db.records.profiles.push({ _id: 'legacy', name: 'Taylor Client' });
+    const listed = await (await request('profiles')).json();
+    assert.ok(listed.some(p => p.firstName === 'Grace' && p.lastName === 'Hopper'));
+    assert.ok(listed.some(p => p.firstName === 'Taylor' && p.lastName === 'Client'));
+  });
+});
+
+test('profile display names and initials handle empty, split and legacy names', async () => {
+  const { profileNames, profileFullName, profileInitials } = await import('../../ui/src/utils/profile.js');
+  assert.equal(profileInitials(null), '');
+  assert.equal(profileFullName({ firstName: ' Ada ', lastName: ' Lovelace ' }), 'Ada Lovelace');
+  assert.equal(profileInitials({ firstName: ' Ada ', lastName: ' Lovelace ' }), 'AL');
+  assert.equal(profileInitials({ firstName: 'Ada', lastName: '' }), 'A');
+  assert.deepEqual(profileNames({ name: 'Taylor van Client' }), { firstName: 'Taylor', lastName: 'van Client' });
+});

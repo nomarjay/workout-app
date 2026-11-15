@@ -1,6 +1,5 @@
 /* Let content use the viewport without squeezing it beside tablet sidebars. */
 @media (max-width: 1100px) {
-  .shell { padding-inline: clamp(10px, 2.2vw, 24px); }
   .shop-workspace { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .workout-bag { position: static; width: 100%; }
   .catalog.shop-products.grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 14px; }
@@ -29,14 +28,6 @@
   .muscle-journal .article-prose { font-size: 14px; line-height: 1.8; }
 }
 @media (max-width: 600px) {
-  .shell { padding-inline: 10px; }
-  .topbar { min-height: 64px; height: auto; padding-block: 10px; gap: 10px; }
-  .topbar .brand { font-size: 28px; letter-spacing: -1.5px; flex-shrink: 0; }
-  .topbar .brand span { font-size: 10px; margin-left: 3px; }
-  .topbar > div { gap: 8px; min-width: 0; }
-  .topbar > div > button { font-size: 12px; padding: 8px 10px; min-height: 38px; }
-  .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding-top: 12px; }
-  .tabs button { min-width: 0; min-height: 42px; padding: 7px 4px; font-size: 12px; white-space: normal; }
   .panel, .dashboard .panel { padding: 14px; }
   .dashboard-welcome, .weekly-checkin { padding: 16px; }
   .dashboard-main, .dashboard-sidebar { gap: 14px; }

@@ -1,4 +1,5 @@
 <script setup>
+import { profileNames } from '../utils/profile.js';
 import {
   computed,
   nextTick,
@@ -51,14 +52,14 @@ watch(
   (workouts, previous) => {
     if (!creatingWorkout.value) return;
     const added = workouts.find(
-      (item) => !previous.some((old) => old.id === item.id)
+      (item) => !previous.some((old) => old.id === item.id),
     );
     if (added) {
       workoutChoice.value = added.id;
       planning.value = true;
       creatingWorkout.value = false;
     }
-  }
+  },
 );
 const duration = ref('');
 const intensity = ref('');
@@ -73,7 +74,7 @@ watch(
   () => props.logs,
   (logs, previous) => {
     if (logs.length > previous.length) session.value = null;
-  }
+  },
 );
 function startWorkout() {
   if (!workout.value || completedWorkout.value || session.value) return;
@@ -86,22 +87,22 @@ function startWorkout() {
 }
 function options(exercise) {
   return props.catalog.exercises.filter(
-    (item) => item.exerciseId === exercise.exerciseId
+    (item) => item.exerciseId === exercise.exerciseId,
   );
 }
 function attachments(exercise) {
   const allowed = attachmentIdsFor(
     props.catalog.equipment.find(
-      (item) => String(item.id) === String(exercise.equipmentId)
-    )
+      (item) => String(item.id) === String(exercise.equipmentId),
+    ),
   );
   return props.catalog.attachments.filter((item) =>
-    allowed.some((id) => String(id) === String(item.id))
+    allowed.some((id) => String(id) === String(item.id)),
   );
 }
 function changeEquipment(index, key) {
   const exercise = options(session.value.exercises[index]).find(
-    (item) => item.equipmentOptionKey === key
+    (item) => item.equipmentOptionKey === key,
   );
   if (exercise)
     session.value.exercises[index] = {
@@ -133,29 +134,29 @@ onMounted(() => {
 onActivated(updateDate);
 onUnmounted(() => clearInterval(timer));
 const schedule = computed(() =>
-  props.schedules.find((item) => item.date === selected.value)
+  props.schedules.find((item) => item.date === selected.value),
 );
 const workout = computed(() =>
-  props.workouts.find((item) => item.id === schedule.value?.workoutId)
+  props.workouts.find((item) => item.id === schedule.value?.workoutId),
 );
 const completedWorkout = computed(() =>
   props.logs.find(
     (log) =>
       log.scheduledDate === selected.value &&
-      (!workout.value || log.workoutId === workout.value.id)
-  )
+      (!workout.value || log.workoutId === workout.value.id),
+  ),
 );
 const chosenWorkout = computed(() =>
-  props.workouts.find((item) => item.id === workoutChoice.value)
+  props.workouts.find((item) => item.id === workoutChoice.value),
 );
 const minutes = computed(
-  () => schedule.value?.durationMinutes ?? estimatedMinutes(workout.value)
+  () => schedule.value?.durationMinutes ?? estimatedMinutes(workout.value),
 );
 const primaryMuscles = computed(() => primaryMusclesFor(workout.value));
 const weekCount = computed(() => {
   const { start, end } = weekBounds(today.value);
   return props.schedules.filter(
-    (item) => item.date >= start && item.date <= end
+    (item) => item.date >= start && item.date <= end,
   ).length;
 });
 
@@ -172,7 +173,7 @@ const completedThisWeek = computed(() => {
 });
 
 const sortedWorkouts = computed(() =>
-  [...props.workouts].sort((a, b) => a.name.localeCompare(b.name))
+  [...props.workouts].sort((a, b) => a.name.localeCompare(b.name)),
 );
 watch([selected, () => props.schedules], () => {
   planning.value = false;
@@ -226,7 +227,7 @@ watch(
     selected.value = today.value;
     planning.value = false;
     confirming.value = false;
-  }
+  },
 );
 </script>
 <template>
@@ -246,7 +247,7 @@ watch(
         <h1 id="dashboard-title">
           {{
             profile
-              ? `Welcome back, ${profile.name.split(' ')[0]}.`
+              ? `Welcome back, ${profileNames(profile).firstName}.`
               : 'Your training, at a glance.'
           }}
         </h1>
@@ -367,8 +368,8 @@ watch(
                 completedWorkout
                   ? 'Completed'
                   : workout
-                  ? 'Scheduled'
-                  : 'Open day'
+                    ? 'Scheduled'
+                    : 'Open day'
               }}</span
             >
           </div>
@@ -377,7 +378,7 @@ watch(
             class="hint text-[15px] leading-[1.6] text-(--color-text-muted)"
             role="status"
           >
-            Loading your schedule…
+            Loading your schedule..
           </p>
           <div
             v-else-if="completedWorkout"
@@ -581,7 +582,7 @@ watch(
                     })
                   "
                 >
-                  {{ busy ? 'Removing…' : 'Confirm removal' }}</button
+                  {{ busy ? 'Removing..' : 'Confirm removal' }}</button
                 ><button :disabled="busy" @click="confirming = false">
                   Cancel
                 </button>
@@ -723,7 +724,7 @@ watch(
                   class="primary border-(--color-primary) bg-(--color-primary) text-(--color-on-primary) font-bold shadow-(--neon-glow)"
                   :disabled="!workoutChoice"
                 >
-                  {{ busy ? 'Saving…' : 'Save schedule' }}</button
+                  {{ busy ? 'Saving..' : 'Save schedule' }}</button
                 ><button type="button" @click="planning = false">Cancel</button>
               </div>
             </fieldset>
@@ -778,7 +779,7 @@ watch(
                 <button
                   class="primary border-(--color-primary) bg-(--color-primary) text-(--color-on-primary) font-bold shadow-(--neon-glow)"
                 >
-                  {{ busy ? 'Saving…' : 'Finish & log workout' }}</button
+                  {{ busy ? 'Saving..' : 'Finish & log workout' }}</button
                 ><button type="button" @click="session = null">
                   Cancel session
                 </button>

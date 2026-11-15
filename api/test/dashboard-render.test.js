@@ -213,7 +213,10 @@ test('dashboard renders the current date, populated workout and profile, and emp
     assert.ok(differentDate.includes('Start workout'));
     const { default: App } = await server.ssrLoadModule('/src/App.vue');
     const home = await renderToString(createSSRApp(App));
-    assert.ok(home.includes('aria-pressed="true">Dashboard'));
+    assert.match(home, /aria-current="page"[^>]*><span[^>]*>Dashboard<\/span>/);
+    assert.ok(home.includes('aria-controls="app-navigation"'));
+    assert.ok(!home.includes('Refresh data'));
+    assert.ok(!home.includes('Reload data'));
     assert.ok(home.includes('Your training, at a glance.'));
     assert.ok(home.includes('aria-label="Profile options"'));
     assert.ok(home.includes('aria-expanded="false"'));

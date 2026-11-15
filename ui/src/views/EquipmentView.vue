@@ -42,7 +42,7 @@ async function removeSelected() {
       else { const body = await response.json().catch(() => ({})); failed.push(`${props.catalog.equipment.find(item => item.id === id)?.['equipment-type'] || id}: ${body.error || 'Could not delete.'}`); }
     }
     const response = await fetch('/api/catalog');
-    if (!response.ok) throw new Error('Could not refresh the collection. Use Refresh data.');
+    if (!response.ok) throw new Error('Could not refresh the collection. Refresh the browser to reload it.');
     emit('catalogChanged', await response.json(), `${removed} equipment items deleted.`);
     error.value = failed.join(' ');
   } catch (cause) { error.value = cause.message; }

@@ -1,3 +1,4 @@
+import { profileNames, profileFullName } from '../../ui/src/utils/profile.js';
 import { attachmentIdsFor } from '../../ui/src/utils/equipment.js';
 import { repeatDates } from './repeat-schedule.js';
 import { ObjectId } from 'mongodb';
@@ -28,12 +29,16 @@ export function validDate(value) {
   );
 }
 function profileRecord(body) {
-  if (
-    typeof body.name !== 'string' ||
-    !body.name.trim() ||
-    body.name.trim().length > 100
-  )
+  const splitNames = body.firstName !== undefined || body.lastName !== undefined;
+  if (splitNames) {
+    for (const key of ['firstName', 'lastName']) {
+      if (typeof body[key] !== 'string' || !body[key].trim() || body[key].trim().length > 100)
+        throw new Error('Enter a first and last name up to 100 characters each.');
+    }
+  } else if (typeof body.name !== 'string' || !body.name.trim() || body.name.trim().length > 100) {
     throw new Error('Enter a name up to 100 characters.');
+  }
+  const names = profileNames(body);
   const email = body.email ?? '';
   if (
     typeof email !== 'string' ||
@@ -79,7 +84,8 @@ function profileRecord(body) {
   )
     throw new Error('Choose a weekly target from 1 to 7 workouts.');
   return {
-    name: body.name.trim(),
+    ...names,
+    name: profileFullName(names),
     email: email.trim(),
     birthDate,
     gender: body.gender || '',
@@ -102,7 +108,7 @@ export function registerDashboardRoutes(app, db) {
     profileId(req) === 'primary' ? date : `${profileId(req)}:${date}`;
   app.get('/api/profiles', async (_req, res) => {
     const records = await profiles.find({}).sort({ name: 1 }).toArray();
-    res.json(records.map(({ _id, name }) => ({ id: String(_id), name })));
+    res.json(records.map(({ _id, ...record }) => ({ id: String(_id), ...profileNames(record), name: profileFullName(record) })));
   });
   app.post('/api/profiles', async (req, res) => {
     let record;
@@ -121,6 +127,8 @@ export function registerDashboardRoutes(app, db) {
   });
   const publicProfile = ({ _id, ...record }) => ({
     ...record,
+    ...profileNames(record),
+    name: profileFullName(record),
     id: String(_id),
   });
   const logs = db.collection('workout_logs');

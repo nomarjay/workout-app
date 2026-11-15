@@ -99,7 +99,7 @@ async function removeSelected() {
     );
   } catch (cause) {
     error.value = committed
-      ? `The deletion finished, but the collection could not refresh. Use Refresh data. ${cause.message}`
+      ? `The deletion finished, but the collection could not refresh. Refresh the browser to reload it. ${cause.message}`
       : cause.message;
   } finally {
     deleting.value = false;

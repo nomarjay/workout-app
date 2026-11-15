@@ -1,5 +1,6 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
+import { profileNames, profileFullName, profileInitials } from '../utils/profile.js';
 import { ageOnDate } from '../utils/dashboard.js';
 const props = defineProps({
   profile: Object,
@@ -28,15 +29,8 @@ const activities = [
   'Moderately active',
   'Very active',
 ];
-const initials = computed(
-  () =>
-    props.profile?.name
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((word) => word[0])
-      .join('')
-      .toUpperCase() || 'YOU'
-);
+const initials = computed(() => profileInitials(props.profile));
+const fullName = computed(() => profileFullName(props.profile));
 const age = computed(() => ageOnDate(props.profile?.birthDate, props.today));
 watch(
   () => props.profile,
@@ -49,7 +43,8 @@ function edit() {
   Object.assign(
     form,
     {
-      name: '',
+      firstName: '',
+      lastName: '',
       email: '',
       birthDate: '',
       gender: '',
@@ -60,7 +55,8 @@ function edit() {
       activityLevel: 'Moderately active',
       weeklyTarget: 3,
     },
-    props.profile || {}
+    props.profile || {},
+    profileNames(props.profile)
   );
   form.birthDate ||= '';
   form.heightCm ??= '';
@@ -105,7 +101,7 @@ defineExpose({ edit });
       class="hint text-[15px] leading-[1.6] text-(--color-text-muted)"
       role="status"
     >
-      Loading your profile…
+      Loading your profile..
     </p>
     <template v-else>
       <template v-if="profile">
@@ -119,7 +115,7 @@ defineExpose({ edit });
             {{ initials }}
           </div>
           <div>
-            <h3>{{ profile.name }}</h3>
+            <h3>{{ fullName }}</h3>
             <p class="hint text-[15px] leading-[1.6] text-(--color-text-muted)">
               {{ profile.experience }} · {{ profile.goal }}
             </p>
@@ -220,7 +216,7 @@ defineExpose({ edit });
               :key="person.id"
               :value="person.id"
             >
-              {{ person.name }}
+              {{ profileFullName(person) }}
             </option>
           </select></label
         >
@@ -241,7 +237,7 @@ defineExpose({ edit });
                 :disabled="busy"
                 @click="emit('delete')"
               >
-                {{ busy ? 'Deleting…' : 'Confirm delete' }}</button
+                {{ busy ? 'Deleting..' : 'Confirm delete' }}</button
               ><button :disabled="busy" @click="confirming = false">
                 Cancel
               </button>
@@ -280,11 +276,18 @@ defineExpose({ edit });
               class="profile-form-grid my-5 grid grid-cols-1 gap-x-3 gap-y-3.5 min-[1051px]:grid-cols-2"
             >
               <label
-                >Full name<input
-                  v-model="form.name"
+                >First name<input
+                  v-model="form.firstName"
                   required
                   maxlength="100"
-                  autocomplete="name"
+                  autocomplete="given-name"
+              /></label>
+              <label
+                >Last name<input
+                  v-model="form.lastName"
+                  required
+                  maxlength="100"
+                  autocomplete="family-name"
               /></label>
               <label
                 >Email (optional)<input
@@ -360,7 +363,7 @@ defineExpose({ edit });
                 class="primary border-(--color-primary) bg-(--color-primary) text-(--color-on-primary) font-bold shadow-(--neon-glow)"
               >
                 {{
-                  busy ? 'Saving…' : profile ? 'Save changes' : 'Create profile'
+                  busy ? 'Saving..' : profile ? 'Save changes' : 'Create profile'
                 }}</button
               ><button type="button" @click="editing = false">Cancel</button>
             </div>

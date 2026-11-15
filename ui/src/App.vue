@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue';
-import ProfileMenu from './components/ProfileMenu.vue';
+import AppLayout from './components/AppLayout.vue';
+import AppStatus from './components/AppStatus.vue';
 import { createDraftTrainerSaver } from './utils/draftTrainer.js';
 import ExerciseView from './views/ExerciseView.vue';
 import MuscleGroupView from './views/MuscleGroupView.vue';
@@ -39,7 +40,7 @@ const saving = ref(false);
 const deleting = ref('');
 const error = ref('');
 const notice = ref('');
-const tabs = [
+const navigation = [
   { id: 'dashboard', name: 'Dashboard' },
   { id: 'workouts', name: 'Workouts' },
   { id: 'exercises', name: 'Equipment' },
@@ -531,68 +532,18 @@ async function chooseProfile(id) {
 onMounted(load);
 </script>
 <template>
-  <div class="shell">
-    <header class="topbar">
-      <a
-        class="brand"
-        href="#"
-        @click.prevent="active = 'dashboard'"
-        aria-label="Form dashboard home"
-        >GIT FIT<span>●</span></a
-      >
-      <div
-        class="flex items-center gap-5 max-[650px]:flex-wrap max-[650px]:justify-end max-[600px]:gap-2.5 max-[600px]:[&_.eyebrow]:hidden"
-      >
-        <button @click="load" :disabled="loading || dashboardBusy">
-          {{ loading ? 'Loading…' : 'Refresh data' }}</button
-        ><ProfileMenu
-          :error="error"
-          :profile="profile"
-          :profiles="profiles"
-          :profile-id="profileId"
-          :busy="dashboardBusy || saving || !!deleting"
-          :loading="loading"
-          @save="saveProfile"
-          @delete="deleteProfile"
-          @choose="chooseProfile"
-        />
-      </div>
-    </header>
-    <main>
-      <nav class="tabs pt-5" aria-label="Data views">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          :aria-pressed="active === tab.id"
-          @click="active = tab.id"
-        >
-          {{ tab.name
-          }}<span v-if="tab.id === 'workouts' && draft.length">
-            ({{ draft.length }})</span
-          >
-        </button>
-      </nav>
-      <p v-if="error" class="message error" role="alert">
-        {{ error }}
-        <button @click="load" :disabled="loading || dashboardBusy">
-          Reload data
-        </button>
-      </p>
-      <p v-if="notice" class="message success" role="status">{{ notice }}</p>
-      <p v-if="loading" role="status">Loading your library…</p>
-      <section
-        class="active-view"
-        :aria-label="tabs.find((tab) => tab.id === active)?.name"
-      >
-        <KeepAlive :key="profileId"
-          ><component
-            :key="active"
-            :is="views[active]"
-            v-bind="activeProps"
-            v-on="activeEvents"
-        /></KeepAlive>
-      </section>
-    </main>
-    <footer>Form · Build your training, one exercise at a time.</footer>
-  </div>
+  <AppLayout
+    :navigation="navigation" :active="active" :draft-count="draft.length"
+    :profile="profile" :profiles="profiles" :profile-id="profileId"
+    :error="error" :busy="dashboardBusy || saving || !!deleting" :loading="loading"
+    @navigate="active = $event" @save-profile="saveProfile"
+    @delete-profile="deleteProfile" @choose-profile="chooseProfile"
+  >
+    <AppStatus :error="error" :notice="notice" :loading="loading" />
+    <section class="active-view" :aria-label="navigation.find((item) => item.id === active)?.name">
+      <KeepAlive :key="profileId">
+        <component :key="active" :is="views[active]" v-bind="activeProps" v-on="activeEvents" />
+      </KeepAlive>
+    </section>
+  </AppLayout>
 </template>

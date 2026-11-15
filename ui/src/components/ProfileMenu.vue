@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { profileFullName, profileInitials } from '../utils/profile.js';
 import ProfileCard from './ProfileCard.vue';
 import { localDate } from '../utils/dashboard.js';
 const props = defineProps({
@@ -17,15 +18,7 @@ const trigger = ref(null);
 const dialog = ref(null);
 const card = ref(null);
 const editorOpen = ref(false);
-const initials = computed(() =>
-  props.profile?.name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join('')
-    .toUpperCase()
-);
+const initials = computed(() => profileInitials(props.profile));
 function closeMenu(restoreFocus = false) {
   open.value = false;
   if (restoreFocus) trigger.value?.focus();
@@ -83,7 +76,7 @@ onUnmounted(() => document.removeEventListener('pointerdown', outside));
       type="button"
       class="grid size-11 shrink-0 place-items-center overflow-hidden rounded-full! border-(--color-primary) bg-(--color-success-background) p-0! font-semibold text-(--color-avatar-text)"
       :aria-label="
-        profile ? `Profile options for ${profile.name}` : 'Profile options'
+        profile ? `Profile options for ${profileFullName(profile)}` : 'Profile options'
       "
       :aria-expanded="open"
       aria-controls="profile-dropdown"
@@ -112,7 +105,7 @@ onUnmounted(() => document.removeEventListener('pointerdown', outside));
     >
       <div class="mb-2 border-b border-(--color-border-subtle) px-2 pb-3">
         <p class="m-0 font-semibold wrap-anywhere">
-          {{ profile?.name || 'Your profile' }}
+          {{ profileFullName(profile) || 'Your profile' }}
         </p>
         <p class="mt-1 mb-0 text-sm text-(--color-text-muted)">
           {{ profile?.goal || 'Choose or create a profile to get started.' }}
@@ -138,7 +131,7 @@ onUnmounted(() => document.removeEventListener('pointerdown', outside));
             :key="person.id"
             :value="person.id"
           >
-            {{ person.name }}
+            {{ profileFullName(person) }}
           </option>
         </select></label
       >

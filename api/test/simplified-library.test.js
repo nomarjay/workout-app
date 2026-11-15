@@ -30,7 +30,7 @@ test('navigation has one Equipment destination and muscle groups render as a sou
     const { default: Guide } = await server.ssrLoadModule('/src/views/MuscleGroupView.vue');
     const { default: Equipment } = await server.ssrLoadModule('/src/views/ExerciseView.vue');
     const shell = await renderToString(createSSRApp(App));
-    const nav = shell.match(/<nav[^>]*aria-label="Data views"[^>]*>([\s\S]*?)<\/nav>/)[1];
+    const nav = shell.match(/<nav[^>]*aria-label="Main navigation"[^>]*>([\s\S]*?)<\/nav>/)[1];
     assert.equal((nav.match(/<button/g) || []).length, 4);
     assert.equal((nav.match(/Equipment/g) || []).length, 1);
     assert.ok(!nav.includes('Exercises'));

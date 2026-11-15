@@ -109,18 +109,6 @@ select:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;
 }
-.shell {
-  max-width: 80vw;
-  margin: auto;
-  padding: 0 32px;
-}
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 88px;
-  border-bottom: 1px solid var(--color-border-header);
-}
 .brand {
   font-size: 36px;
   font-weight: 800;
@@ -154,13 +142,6 @@ select:focus-visible {
 .intro p:last-child {
   color: var(--color-text-secondary);
 }
-.tabs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding-bottom: 24px;
-}
-.tabs button[aria-pressed='true'],
 .view-toggle button[aria-pressed='true'] {
   background: var(--color-primary);
   color: var(--color-on-primary);
@@ -372,19 +353,7 @@ small {
   color: var(--color-text-muted);
   text-align: center;
 }
-footer {
-  text-align: center;
-  padding: 38px 0;
-  font-size: 11px;
-  color: var(--color-text-subtle);
-}
 @media (max-width: 600px) {
-  .shell {
-    padding: 0 16px;
-  }
-  .topbar {
-    height: 72px;
-  }
   .intro {
     align-items: start;
     flex-direction: column;
@@ -404,12 +373,6 @@ footer {
   }
   .card-content {
     padding: 16px;
-  }
-  .tabs {
-    gap: 5px;
-  }
-  .tabs button {
-    padding: 9px;
   }
   .panel {
     padding: 18px;
@@ -511,12 +474,6 @@ footer {
 }
 .intro p:last-child {
   margin-bottom: 0;
-}
-.tabs {
-  padding-bottom: 16px;
-}
-.tabs button {
-  border-radius: 999px;
 }
 .toolbar {
   display: flex;
@@ -961,7 +918,6 @@ select option {
 
 /* Neon chalk marks distinguish active controls against the matte board. */
 .primary,
-.tabs button[aria-pressed='true'],
 .view-toggle button[aria-pressed='true'],
 .pill[aria-pressed='true'] {
   font-weight: 750;
